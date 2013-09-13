@@ -1,0 +1,4 @@
+Wideboard
+=========
+
+text editor experiment
