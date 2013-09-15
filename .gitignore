@@ -1,0 +1,10 @@
+.metadata
+Debug
+RemoteSystemsTempFiles
+*.ncb
+*.suo
+*.user
+*.wwdb
+closure-library
+compiler.jar
+plovr.jar
