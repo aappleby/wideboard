@@ -4,8 +4,11 @@ goog.require('goog.math.Vec2');
 goog.require('goog.string');
 goog.require('goog.webgl');
 goog.require('wideboard.Buffer');
+goog.require('wideboard.Camera');
+goog.require('wideboard.Context');
 goog.require('wideboard.Controls');
 goog.require('wideboard.Draw');
+goog.require('wideboard.Grid');
 goog.require('wideboard.Shader');
 goog.require('wideboard.Texture');
 
@@ -19,20 +22,17 @@ wideboard.App = function() {
   /** @type {string} */
   this.name = 'Wideboard';
 
-  /** @type {HTMLCanvasElement} */
-  this.canvas = null;
-
-  /** @type {WebGLRenderingContext} */
+  /** @type {wideboard.Context} */
   this.context = null;
 
   /** @type {Object} */
   this.extension = null;
 
   /** @type {number} */
-  this.requestID = 0;
+  this.frameCounter = 0;
 
   /** @type {number} */
-  this.frameCounter = 0;
+  this.lastFrameTime = performance.now();
 
   /** @type {wideboard.Buffer} */
   this.posBuffer = null;
@@ -52,8 +52,17 @@ wideboard.App = function() {
   /** @type {wideboard.Shader} */
   this.texShader = null;
 
+  /** @type {wideboard.Shader} */
+  this.textShader = null;
+
   /** @type {wideboard.Texture} */
   this.texture = null;
+
+  /** @type {wideboard.Texture} */
+  this.glyphTexture = null;
+
+  /** @type {wideboard.Texture} */
+  this.docTexture = null;
 
   /** @type {wideboard.Uniform} */
   this.screenUniform = null;
@@ -62,70 +71,153 @@ wideboard.App = function() {
   this.controls = new wideboard.Controls();
 
   /** @type {wideboard.Draw} */
-  this.draw = null;
+  this.debugDraw = null;
+
+  /** @type {wideboard.Grid} */
+  this.grid = null;
+
+  /** @type {wideboard.Camera} */
+  this.camera = null;
 
   /** @type {function(number)} */
-  this.renderCallback = goog.bind(this.render, this);
+  this.frameCallback = goog.bind(this.onRequestAnimationFrame, this);
+
+  /** @type {!Object.<string, !wideboard.Uniform>} */
+  this.uniforms = {};
+
+  this.pickX = 0;
+  this.pickY = 0;
 };
 
 
 /**
- * Main render loop, called by requestAnimationFrame.
- * @param {number} time
+ * @param {number} delta
  */
-wideboard.App.prototype.render = function(time) {
-  if (!this.simpleShader || !this.simpleShader.ready) {
-    window.requestAnimationFrame(this.renderCallback);
-    return;
-  }
+wideboard.App.prototype.update = function(delta) {
+  this.camera.update(delta);
 
-  this.frameCounter++;
+  var lerpFactor = 1.0 - Math.pow(0.1, delta / 80);
+  this.pickX += (this.controls.mouseDownX - this.pickX) * lerpFactor;
+  this.pickY += (this.controls.mouseDownY - this.pickY) * lerpFactor;
+};
 
-  var canvas = this.canvas;
-  if ((canvas.width != canvas.clientWidth) || (canvas.height != canvas.clientHeight)) {
+
+/**
+ * Handles pre-draw bookkeeping.
+ * @return {boolean} True if we're OK to render.
+ */
+wideboard.App.prototype.beginFrame = function() {
+  if (!this.context) return false;
+
+  if (!this.simpleShader) return false;
+  if (!this.simpleShader.ready) return false;
+  if (!this.texShader) return false;
+  if (!this.texShader.ready) return false;
+
+  var canvas = this.context.canvas;
+  if ((canvas.width != canvas.clientWidth) ||
+      (canvas.height != canvas.clientHeight)) {
     canvas.width = canvas.clientWidth;
     canvas.height = canvas.clientHeight;
   }
 
-  var gl = this.context;
+  return true;
+};
+
+
+/**
+ * Main render function.
+ */
+wideboard.App.prototype.render = function() {
+  var canvas = this.context.canvas;
+  var gl = this.context.gl;
 
   gl.viewport(0, 0, canvas.width, canvas.height);
-  gl.clearColor(0.1, 0.1, 0.2, 1);
+  gl.clearColor(0.6, 0.6, 0.7, 1);
   gl.clear(gl.COLOR_BUFFER_BIT);
 
   gl.disable(gl.DEPTH_TEST);
   gl.disable(gl.CULL_FACE);
+  gl.enable(gl.BLEND);
+  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
-  this.simpleShader.bind();
-  this.simpleShader.setUniform2f('screen', canvas.width, canvas.height);
-  this.simpleShader.setUniform2f('offset', 200, 50); //this.controls.mouseDownX, this.controls.mouseDownY);
-  this.simpleShader.bindBuffer(this.posBuffer);
-  this.simpleShader.bindBuffer(this.colBuffer);
-  this.indexBuffer.bind();
-  gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, 0);
+  var view = this.camera.view;
 
-  this.texShader.bind();
-  this.texShader.setUniform2f('screen', canvas.width, canvas.height);
-  this.texShader.setUniform2f('offset', 100, 50);
-  this.texShader.setUniform1i('texture', 0);
-  this.texShader.bindBuffer(this.posBuffer);
-  this.texShader.bindBuffer(this.texBuffer);
-  this.indexBuffer.bind();
-  gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, 0);
+  this.uniforms['screenSize'].set(canvas.width, canvas.height);
+  this.uniforms['modelToWorld'].set(0, 0, 1, 1);
+  this.uniforms['worldToView'].set(-view.origin.x, -view.origin.y, view.scale.x, view.scale.y);
 
-  var draw = this.draw;
-  draw.setColor(1, 0, 0);
-  draw.moveTo(100 + Math.sin(time / 1000) * 100, 100);
-  draw.lineTo(200, 200);
-  draw.setColor(0, 1, 0);
-  draw.lineTo(300, 200);
-  draw.setColor(0, 0, 1);
-  draw.moveTo(500, 40);
-  draw.lineTo(500, 400);
-  draw.endFrame();
 
-  goog.asserts.assert(!gl.getError());
-  window.requestAnimationFrame(this.renderCallback);
+  /*
+  if (this.posBuffer && this.colBuffer && this.indexBuffer) {
+    var shader = this.simpleShader;
+    var uniforms = shader.uniforms;
+    var attributes = shader.attributes;
+
+    gl.useProgram(shader.glProgram);
+
+    attributes['vpos'].set2f(this.posBuffer.glBuffer, 0, 0);
+    attributes['vcol'].set4f(this.colBuffer.glBuffer, 0, 0);
+
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer.glBuffer);
+
+    gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, 0);
+  }
+  */
+
+  /*
+  if (this.posBuffer && this.texBuffer && this.indexBuffer) {
+    var shader = this.texShader;
+
+    gl.useProgram(shader.glProgram);
+
+    shader.uniforms['texture'].set1i(0);
+    shader.attributes['vpos'].set2f(this.posBuffer.glBuffer, 8, 0);
+    shader.attributes['vtex'].set2f(this.texBuffer.glBuffer, 8, 0);
+
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer.glBuffer);
+
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this.texture.glTexture);
+
+    gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, 0);
+  }
+  */
+
+  this.grid.draw();
+  gl.useProgram(this.simpleShader.glProgram);
+  this.simpleShader.setUniforms();
+  this.debugDraw.draw(this.simpleShader);
+};
+
+
+/**
+ *
+ */
+wideboard.App.prototype.endFrame = function() {
+};
+
+
+/**
+ * requestAnimationFrame callback.
+ * @param {number} time
+ */
+wideboard.App.prototype.onRequestAnimationFrame = function(time) {
+  var delta = time - this.lastFrameTime;
+  this.frameCounter++;
+
+  this.update(delta);
+
+  if (this.beginFrame()) {
+    this.render();
+    this.endFrame();
+  }
+
+  //goog.asserts.assert(!gl.getError());
+
+  this.lastFrameTime = time;
+
+  window.requestAnimationFrame(this.frameCallback);
 };
 
 
@@ -141,32 +233,22 @@ wideboard.App.prototype.run = function(canvasElementId) {
     return;
   }
 
+  var context = new wideboard.Context(canvas);
+  if (!context) return;
+  if (!context.gl) return;
+  this.context = context;
+
+  var gl = context.gl;
+
   // Hook the controls up.
   this.controls.install(canvas);
 
-  // Create the GL context & kick off the render loop.
-  this.canvas = canvas;
-  var options = {
-    alpha: true,
-    depth: true,
-    stencil: false,
-    antialias: false,
-    premultipliedAlpha: false,
-    preserveDrawingBuffer: false
-  };
+  this.camera = new wideboard.Camera(gl);
+  this.controls.addTarget(this.camera);
 
-  this.context = /** @type {WebGLRenderingContext} */(this.canvas.getContext('webgl', options));
-  if (!this.context) {
-    goog.global.console.log('Creating WebGL context failed');
-    return;
-  }
+  this.debugDraw = new wideboard.Draw(gl);
 
-  this.extension = this.context.getExtension('ANGLE_instanced_arrays');
-
-  var gl = this.context;
-
-  this.draw = new wideboard.Draw(gl);
-  this.draw.init();
+  this.grid = new wideboard.Grid(this.debugDraw, this.camera);
 
   this.posBuffer = new wideboard.Buffer(gl, 'vpos', gl.STATIC_DRAW);
   this.posBuffer.initVec2([0, 0, 0, 64, 64, 64, 64, 0]);
@@ -185,16 +267,27 @@ wideboard.App.prototype.run = function(canvasElementId) {
   this.indexBuffer = new wideboard.Buffer(gl, 'indices', gl.STATIC_DRAW);
   this.indexBuffer.initIndex8([0, 1, 2, 0, 2, 3]);
 
-  this.texture = new wideboard.Texture(gl, 64, 64);
+  this.texture = new wideboard.Texture(gl, 256, 256);
   this.texture.makeNoise();
 
-  this.simpleShader = new wideboard.Shader(gl, 'simple.glsl', ['vpos', 'vcol'], ['screen', 'offset']);
-  this.simpleShader.asyncLoad();
+  this.glyphTexture = new wideboard.Texture(gl, 256, 256);
+  this.glyphTexture.load('terminus.bmp');
 
-  this.texShader = new wideboard.Shader(gl, 'texture.glsl', ['vpos', 'vtex'], ['screen', 'offset', 'texture']);
-  this.texShader.asyncLoad();
+  this.docTexture = new wideboard.Texture(gl, 32, 32);
+  this.docTexture.makeLoremIpsum();
 
-  window.requestAnimationFrame(this.renderCallback);
+  // Shaders
+
+  this.uniforms['screenSize'] = new wideboard.Uniform(gl, 'screenSize', gl.FLOAT_VEC2);
+  this.uniforms['modelToWorld'] = new wideboard.Uniform(gl, 'modelToWorld', gl.FLOAT_VEC4);
+  this.uniforms['worldToView'] = new wideboard.Uniform(gl, 'worldToView', gl.FLOAT_VEC4);
+
+  this.textShader = new wideboard.Shader(gl, 'text1.glsl', this.uniforms);
+
+  this.simpleShader = new wideboard.Shader(gl, 'simple.glsl', this.uniforms);
+  this.texShader = new wideboard.Shader(gl, 'texture.glsl', this.uniforms);
+
+  window.requestAnimationFrame(this.frameCallback);
 };
 
 goog.exportSymbol('wideboard.App', wideboard.App);

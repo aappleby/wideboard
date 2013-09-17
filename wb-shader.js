@@ -1,71 +1,64 @@
 goog.provide('wideboard.Shader');
 
+goog.require('wideboard.Attribute');
+goog.require('wideboard.Uniform');
+
 
 
 /**
  * Simple shader class.
  * @param {!WebGLRenderingContext} gl
  * @param {string} filename
- * @param {!Array.<string>} attribList
- * @param {!Array.<string>} uniformList
+ * @param {Object.<string, !wideboard.Uniform>=} opt_uniforms
  * @constructor
  * @struct
  */
-wideboard.Shader = function(gl, filename, attribList, uniformList) {
+wideboard.Shader = function(gl, filename, opt_uniforms) {
   /** @type {WebGLRenderingContext} */
   this.gl = gl;
 
   /** @type {string} */
   this.filename = filename;
 
-  /** @type {WebGLShader} */
-  this.vshader = null;
+  /** @type {!WebGLShader} */
+  this.vshader = gl.createShader(gl.VERTEX_SHADER);
 
-  /** @type {WebGLShader} */
-  this.fshader = null;
+  /** @type {!WebGLShader} */
+  this.fshader = gl.createShader(gl.FRAGMENT_SHADER);
 
-  /** @type {WebGLProgram} */
-  this.program = null;
+  /** @type {!WebGLProgram} */
+  this.glProgram = gl.createProgram();
 
-  /** @type {!Array.<string>} */
-  this.attribList = attribList;
+  /** @type {!Object.<string, !wideboard.Attribute>} */
+  this.attributes = {};
 
-  /** @type {!Object.<string, number>} */
-  this.attribMap = {};
+  /** @type {!Array.<!wideboard.Attribute>} */
+  this.attributeList = [];
 
-  /** @type {!Array.<string>} */
-  this.uniformList = uniformList;
+  /** @type {!Object.<string, !wideboard.Uniform>} */
+  this.globalUniforms = opt_uniforms || {};
 
-  /** @type {!Object.<string, WebGLUniformLocation>} */
-  this.uniformMap = {};
+  /** @type {!Object.<string, !wideboard.Uniform>} */
+  this.uniforms = {};
+
+  /** @type {!Array.<!wideboard.Uniform>} */
+  this.uniformList = [];
 
   /** @type {boolean} */
   this.ready = false;
+
+  this.init();
 };
 
 
 /**
- * Kicks off XHRs to load the vertex and fragment shader, compiling
- * and linking them when the requests come back.
  */
-wideboard.Shader.prototype.asyncLoad = function() {
-  var self = this;
-
+wideboard.Shader.prototype.init = function() {
   var xhr1 = new XMLHttpRequest();
-  xhr1.onreadystatechange = function() {
-    if (this.readyState == 4) self.sourceLoaded(this.responseText);
-  };
-  xhr1.open('GET', this.filename, true);
+  xhr1.open('GET', this.filename, false);
   xhr1.send();
-};
+  var source = xhr1.responseText;
 
-
-/**
- * When the vertex shader request returns, creates and compiles the shader.
- * Links the program if the fragment shader is also ready.
- * @param {string} source
- */
-wideboard.Shader.prototype.sourceLoaded = function(source) {
   var gl = this.gl;
 
   var prefix = '#ifdef _FRAGMENT_\n' +
@@ -73,7 +66,6 @@ wideboard.Shader.prototype.sourceLoaded = function(source) {
                '#endif\n' +
                'precision mediump float;\n';
 
-  this.vshader = gl.createShader(gl.VERTEX_SHADER);
   gl.shaderSource(this.vshader, '#define _VERTEX_\n' + prefix + source);
   gl.compileShader(this.vshader);
 
@@ -81,7 +73,6 @@ wideboard.Shader.prototype.sourceLoaded = function(source) {
     goog.global.console.log('Fragment shader compile failed');
   }
 
-  this.fshader = gl.createShader(gl.FRAGMENT_SHADER);
   gl.shaderSource(this.fshader, '#define _FRAGMENT_\n' + prefix + source);
   gl.compileShader(this.fshader);
 
@@ -89,77 +80,53 @@ wideboard.Shader.prototype.sourceLoaded = function(source) {
     goog.global.console.log('Fragment shader compile failed');
   }
 
-  this.program = gl.createProgram();
-  gl.attachShader(this.program, this.vshader);
-  gl.attachShader(this.program, this.fshader);
+  gl.attachShader(this.glProgram, this.vshader);
+  gl.attachShader(this.glProgram, this.fshader);
+  gl.linkProgram(this.glProgram);
 
-  for (var i = 0; i < this.attribList.length; i++) {
-    gl.bindAttribLocation(this.program, i, this.attribList[i]);
-    this.attribMap[this.attribList[i]] = i;
-  }
-
-  gl.linkProgram(this.program);
-
-  if (!gl.getProgramParameter(this.program, gl.LINK_STATUS)) {
+  if (!gl.getProgramParameter(this.glProgram, gl.LINK_STATUS)) {
     goog.global.console.log('Shader link failed!');
   } else {
     goog.global.console.log('Shader ' + this.filename + ' linked');
     this.ready = true;
   }
 
-  gl.useProgram(this.program);
+  gl.useProgram(this.glProgram);
 
-  for (var i = 0; i < this.uniformList.length; i++) {
-    var location = gl.getUniformLocation(this.program, this.uniformList[i]);
-    this.uniformMap[this.uniformList[i]] = location;
+  goog.global.console.log('Attributes:');
+  var attribCount = /** @type {number} */(gl.getProgramParameter(this.glProgram, gl.ACTIVE_ATTRIBUTES));
+  for (var i = 0; i < attribCount; i++) {
+    var attribInfo = gl.getActiveAttrib(this.glProgram, i);
+    var location = gl.getAttribLocation(this.glProgram, attribInfo.name);
+    if (goog.isDefAndNotNull(location)) {
+      goog.global.console.log(attribInfo);
+      var attribute = new wideboard.Attribute(gl, attribInfo.name, attribInfo.type, location);
+      this.attributes[attribInfo.name] = attribute;
+      this.attributeList.push(attribute);
+    }
+  }
+
+  goog.global.console.log('Uniforms:');
+  var uniformCount = /** @type {number} */(gl.getProgramParameter(this.glProgram, gl.ACTIVE_UNIFORMS));
+  for (var i = 0; i < uniformCount; i++) {
+    var uniformInfo = gl.getActiveUniform(this.glProgram, i);
+    var location = gl.getUniformLocation(this.glProgram, uniformInfo.name);
+    if (goog.isDefAndNotNull(location)) {
+      goog.global.console.log(uniformInfo);
+      var globalUniform = this.globalUniforms[uniformInfo.name];
+      var uniform = new wideboard.Uniform(gl, uniformInfo.name, uniformInfo.type, location, globalUniform);
+      this.uniforms[uniformInfo.name] = uniform;
+      this.uniformList.push(uniform);
+    }
   }
 };
 
 
 /**
- * Binds this shader to the WebGL context.
  */
-wideboard.Shader.prototype.bind = function() {
-  if (this.ready) {
-    this.gl.useProgram(this.program);
-    this.gl.enableVertexAttribArray(0);
-  }
-};
-
-
-/**
- * @param {wideboard.Buffer} buffer
- */
-wideboard.Shader.prototype.bindBuffer = function(buffer) {
-  if (!buffer) return;
-  var gl = this.gl;
-  var slot = this.attribMap[buffer.name];
-  gl.enableVertexAttribArray(slot);
-  gl.bindBuffer(gl.ARRAY_BUFFER, buffer.buffer);
-  gl.vertexAttribPointer(slot, buffer.size, buffer.type, false, buffer.stride, 0);
-};
-
-
-/**
- * @param {string} name
- * @param {number} x
- * @param {number} y
- */
-wideboard.Shader.prototype.setUniform2f = function(name, x, y) {
-  var loc = this.uniformMap[name];
-  if (loc) {
-    this.gl.uniform2f(loc, x, y);
-  }
-};
-
-
-/**
- * @param {string} name
- * @param {number} x
- */
-wideboard.Shader.prototype.setUniform1i = function(name, x) {
-  var loc = this.uniformMap[name];
-  if (loc) {
-    this.gl.uniform1i(loc, x);
+wideboard.Shader.prototype.setUniforms = function() {
+  var uniforms = this.uniformList;
+  for (var i = 0; i < uniforms.length; i++) {
+    uniforms[i].glSet();
   }
 };

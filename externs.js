@@ -9,4 +9,11 @@ var performance = {};
 performance.now = function() {};
 
 /** @constructor */
-var WheelEvent = function() {};
+var WheelEvent = function() {
+  /** @type {number} */
+  this.x = 0;
+  /** @type {number} */
+  this.y = 0;
+  /** @type {number} */
+  this.wheelDelta = 0;
+};

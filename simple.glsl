@@ -1,5 +1,6 @@
-uniform vec2 screen;
-uniform vec2 offset;
+uniform vec4 modelToWorld;
+uniform vec4 worldToView;
+uniform vec2 screenSize;
 
 attribute vec2 vpos;
 attribute vec4 vcol;
@@ -9,10 +10,14 @@ varying vec4 fcol;
 #ifdef _VERTEX_
 
 void main(void) {
-  float sx = ((vpos.x + offset.x) / screen.x) * 2.0 - 1.0;
-  float sy = ((vpos.y + offset.y) / screen.y) * 2.0 - 1.0;
-  sy = -sy;
-  gl_Position = vec4(sx, sy, 1.0, 1.0);
+  vec2 p = vpos;
+  p *= modelToWorld.zw;
+  p += modelToWorld.xy;
+  p += worldToView.xy;
+  p *= worldToView.zw;
+  p /= (screenSize.xy / 2.0);
+  p *= vec2(1.0, -1.0);
+  gl_Position = vec4(p.x, p.y, 1.0, 1.0);
   fcol = vcol;
 }
 

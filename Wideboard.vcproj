@@ -4,6 +4,7 @@
 	Version="9.00"
 	Name="Wideboard"
 	ProjectGUID="{753C047A-BDEE-4744-8181-A45E8B1231F3}"
+	RootNamespace="Wideboard"
 	Keyword="MakeFileProj"
 	TargetFrameworkVersion="196613"
 	>
@@ -64,10 +65,6 @@
 			>
 		</File>
 		<File
-			RelativePath=".\debugdraw.glsl"
-			>
-		</File>
-		<File
 			RelativePath=".\externs.js"
 			>
 		</File>
@@ -80,6 +77,14 @@
 			>
 		</File>
 		<File
+			RelativePath=".\terminus.bmp"
+			>
+		</File>
+		<File
+			RelativePath=".\text1.glsl"
+			>
+		</File>
+		<File
 			RelativePath=".\texture.glsl"
 			>
 		</File>
@@ -88,7 +93,19 @@
 			>
 		</File>
 		<File
+			RelativePath=".\wb-attribute.js"
+			>
+		</File>
+		<File
 			RelativePath=".\wb-buffer.js"
+			>
+		</File>
+		<File
+			RelativePath=".\wb-camera.js"
+			>
+		</File>
+		<File
+			RelativePath=".\wb-context.js"
 			>
 		</File>
 		<File
@@ -100,11 +117,19 @@
 			>
 		</File>
 		<File
+			RelativePath=".\wb-dragtarget.js"
+			>
+		</File>
+		<File
 			RelativePath=".\wb-draw.js"
 			>
 		</File>
 		<File
 			RelativePath=".\wb-file.js"
+			>
+		</File>
+		<File
+			RelativePath=".\wb-grid.js"
 			>
 		</File>
 		<File
@@ -121,10 +146,6 @@
 		</File>
 		<File
 			RelativePath=".\wb-util.js"
-			>
-		</File>
-		<File
-			RelativePath=".\wb-view.js"
 			>
 		</File>
 		<File

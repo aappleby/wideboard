@@ -18,12 +18,6 @@ wideboard.Draw = function(gl) {
   this.gl = gl;
 
   /**
-   * The simple shader we use for debug drawing.
-   * @type {!wideboard.Shader}
-   */
-  this.shader = new wideboard.Shader(gl, 'debugdraw.glsl', ['vpos', 'vcol'], ['screen']);
-
-  /**
    * The buffer we're currently filling.
    * @type {wideboard.Buffer}
    */
@@ -40,11 +34,6 @@ wideboard.Draw = function(gl) {
    * @type {!Array.<!wideboard.Buffer>}
    */
   this.fullBuffers = [];
-
-  /**
-   * @type {string}
-   */
-  this.penMode = 'line';
 
   /**
    * The pen X position.
@@ -103,19 +92,12 @@ wideboard.Draw = function(gl) {
 
 
 /**
- */
-wideboard.Draw.prototype.init = function() {
-  this.shader.asyncLoad();
-};
-
-
-/**
  * @param {number} r
  * @param {number} g
  * @param {number} b
  * @param {number=} a
  */
-wideboard.Draw.prototype.setColor = function(r, g, b, a) {
+wideboard.Draw.prototype.color = function(r, g, b, a) {
   this.penR = r;
   this.penG = g;
   this.penB = b;
@@ -146,10 +128,6 @@ wideboard.Draw.prototype.moveTo = function(x, y, z) {
  * @param {number=} z
  */
 wideboard.Draw.prototype.lineTo = function(x, y, z) {
-  if (this.penMode != 'line') {
-    this.flushPath();
-    this.penMode = 'line';
-  }
   z = z || 0;
   this.penPath.push(this.penX);
   this.penPath.push(this.penY);
@@ -166,27 +144,18 @@ wideboard.Draw.prototype.lineTo = function(x, y, z) {
 
 
 /**
- * @param {number} x
- * @param {number} y
- * @param {number} z
+ * @param {number} x1
+ * @param {number} y1
+ * @param {number} x2
+ * @param {number} y2
  */
-wideboard.Draw.prototype.polyTo = function(x, y, z) {
-  if (this.penMode != 'poly') {
-    this.flushPath();
-    this.penMode = 'poly';
-  }
-  z = z || 0;
-  this.penPath.push(this.penX);
-  this.penPath.push(this.penY);
-  this.penPath.push(this.penZ);
-  this.penPath.push(this.penR);
-  this.penPath.push(this.penG);
-  this.penPath.push(this.penB);
-  this.penPath.push(this.penA);
-  this.penX = x;
-  this.penY = y;
-  this.penZ = z;
-  this.penDown = true;
+wideboard.Draw.prototype.strokeRect = function(x1, y1, x2, y2) {
+  this.moveTo(x1, y1);
+  this.lineTo(x2, y1);
+  this.lineTo(x2, y2);
+  this.lineTo(x1, y2);
+  this.lineTo(x1, y1);
+  this.flushPath();
 };
 
 
@@ -206,19 +175,11 @@ wideboard.Draw.prototype.flushPath = function() {
   }
 
   var path = this.penPath;
-  if (this.penMode == 'line') {
-    var count = (path.length / 7) - 1;
-    for (var i = 0; i < count; i++) {
-      var c = i * 7;
-      this.pushSegment(path[c + 0], path[c + 1], path[c + 2], path[c + 3], path[c + 4], path[c + 5], path[c + 6],
-                       path[c + 7], path[c + 8], path[c + 9], path[c + 10], path[c + 11], path[c + 12], path[c + 13]);
-    }
-  } else if (this.penMode == 'poly') {
-    // Triangulate the path and add the triangles to the buffer.
-    // TODO(aappleby): Some real triangulation code here might be nice.
-    goog.global.console.log('Write poly draw...');
-  } else {
-    goog.asserts.fail('Bad debug draw mode');
+  var count = (path.length / 7) - 1;
+  for (var i = 0; i < count; i++) {
+    var c = i * 7;
+    this.pushSegment(path[c + 0], path[c + 1], path[c + 2], path[c + 3], path[c + 4], path[c + 5], path[c + 6],
+                     path[c + 7], path[c + 8], path[c + 9], path[c + 10], path[c + 11], path[c + 12], path[c + 13]);
   }
 
   this.penPath.length = 0;
@@ -283,8 +244,8 @@ wideboard.Draw.prototype.startBuffer = function(primitiveType) {
   var nextBuffer = this.bufferPool.pop();
   if (!nextBuffer) {
     nextBuffer = new wideboard.Buffer(this.gl, 'debugdraw', this.gl.DYNAMIC_DRAW);
-    // Each buffer can hold 32k vertices.
-    nextBuffer.initDynamic(7, 32768);
+    // Each buffer can hold 4096 vertices.
+    nextBuffer.initDynamic(7, 4096);
   }
   nextBuffer.primitiveType = primitiveType;
   this.currentBuffer = nextBuffer;
@@ -302,11 +263,9 @@ wideboard.Draw.prototype.endBuffer = function() {
 
 
 /**
+ * @param {wideboard.Shader} shader
  */
-wideboard.Draw.prototype.endFrame = function() {
-  var gl = this.gl;
-  var shader = this.shader;
-
+wideboard.Draw.prototype.draw = function(shader) {
   this.flushPath();
 
   if (this.currentBuffer) {
@@ -314,19 +273,14 @@ wideboard.Draw.prototype.endFrame = function() {
     this.currentBuffer = null;
   }
 
-  shader.bind();
-  shader.setUniform2f('screen', gl.canvas.width, gl.canvas.height);
-  var posSlot = shader.attribMap['vpos'];
-  var colSlot = shader.attribMap['vcol'];
-  gl.enableVertexAttribArray(posSlot);
-  gl.enableVertexAttribArray(colSlot);
+  var gl = shader.gl;
+  gl.useProgram(shader.glProgram);
 
   for (var i = 0; i < this.fullBuffers.length; i++) {
     var buffer = this.fullBuffers[i];
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffer.buffer);
-    gl.bufferSubData(gl.ARRAY_BUFFER, 0, buffer.data.subarray(0, buffer.cursor));
-    gl.vertexAttribPointer(posSlot, 3, gl.FLOAT, false, 28, 0);
-    gl.vertexAttribPointer(colSlot, 4, gl.FLOAT, false, 28, 12);
+    buffer.upload();
+    shader.attributes['vpos'].set3f(buffer.glBuffer, 28, 0);
+    shader.attributes['vcol'].set4f(buffer.glBuffer, 28, 12);
     gl.drawArrays(gl.LINES, 0, buffer.cursor / 7);
   }
 
@@ -335,5 +289,4 @@ wideboard.Draw.prototype.endFrame = function() {
     buffer.resetCursor();
     this.bufferPool.push(buffer);
   }
-
 };
