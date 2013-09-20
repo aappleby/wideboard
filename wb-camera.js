@@ -27,6 +27,12 @@ wideboard.Camera = function(gl) {
 
   /** @type {!wideboard.View} */
   this.viewGoal = new wideboard.View();
+
+  /** @type {!wideboard.View} */
+  this.viewSnap = new wideboard.View();
+
+  /** @type {!wideboard.View} */
+  this.viewGoalSnap = new wideboard.View();
 };
 
 
@@ -34,29 +40,8 @@ wideboard.Camera = function(gl) {
  * @param {number} delta Time increment, in milliseconds.
  */
 wideboard.Camera.prototype.update = function(delta) {
-  wideboard.util.easeView(this.view, this.viewGoal, delta);
-};
-
-
-/**
- * @param {goog.math.Vec2} p
- * @return {goog.math.Vec2}
- */
-wideboard.Camera.prototype.screenToView = function(p) {
-  p.x -= this.gl.canvas.width / 2;
-  p.y -= this.gl.canvas.height / 2;
-  return p;
-};
-
-
-/**
- * @param {goog.math.Vec2} p
- * @return {goog.math.Vec2}
- */
-wideboard.Camera.prototype.viewToScreen = function(p) {
-  p.x += this.gl.canvas.width / 2;
-  p.y += this.gl.canvas.height / 2;
-  return p;
+  wideboard.util.easeView(this.view, this.viewGoal, delta, this.gl.canvas);
+  wideboard.util.easeView(this.viewSnap, this.viewGoalSnap, delta, this.gl.canvas);
 };
 
 
@@ -74,8 +59,30 @@ wideboard.Camera.prototype.onMouseClick = function(x, y) {
  * @param {number} delta
  */
 wideboard.Camera.prototype.onMouseWheel = function(x, y, delta) {
-  this.viewGoal.scale.x *= Math.pow(2.0, delta);
-  this.viewGoal.scale.y *= Math.pow(2.0, delta);
+  var oldZoom = Math.log(this.viewGoal.scale) / Math.log(2);
+  var step = 1.0;
+  oldZoom = Math.round(oldZoom / step) * step;
+  var newZoom = oldZoom + delta * step;
+  if (newZoom < -4) newZoom = -4;
+  if (newZoom > 4) newZoom = 4;
+  var newDelta = newZoom - oldZoom;
+
+  // Convert from screen space to graph space.
+
+  x = wideboard.util.screenToWorldX(x, this.gl.canvas, this.viewGoal);
+  y = wideboard.util.screenToWorldY(y, this.gl.canvas, this.viewGoal);
+
+  this.viewGoal.origin.x -= x;
+  this.viewGoal.origin.y -= y;
+  this.viewGoal.origin.x /= Math.pow(2.0, newDelta);
+  this.viewGoal.origin.y /= Math.pow(2.0, newDelta);
+  this.viewGoal.origin.x += x;
+  this.viewGoal.origin.y += y;
+
+  this.viewGoal.scale = Math.pow(2.0, newZoom);
+
+  this.viewGoalSnap.copy(this.viewGoal);
+  wideboard.util.snapView(this.viewGoalSnap, this.gl.canvas);
 };
 
 
@@ -93,9 +100,12 @@ wideboard.Camera.prototype.onDragBegin = function(x, y) {
  * @param {number} dy
  */
 wideboard.Camera.prototype.onDragUpdate = function(dx, dy) {
-  this.viewGoal.copy(this.oldView);
-  this.viewGoal.origin.x -= dx;
-  this.viewGoal.origin.y -= dy;
+  //this.viewGoal.copy(this.oldView);
+  this.viewGoal.origin.x -= dx / this.viewGoal.scale;
+  this.viewGoal.origin.y -= dy / this.viewGoal.scale;
+
+  this.viewGoalSnap.copy(this.viewGoal);
+  wideboard.util.snapView(this.viewGoalSnap, this.gl.canvas);
 };
 
 

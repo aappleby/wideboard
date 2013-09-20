@@ -44,7 +44,7 @@ wideboard.Context.prototype.init = function() {
     alpha: true,
     depth: true,
     stencil: false,
-    antialias: false,
+    antialias: true,
     premultipliedAlpha: false,
     preserveDrawingBuffer: true
   };

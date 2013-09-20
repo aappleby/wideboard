@@ -130,3 +130,10 @@ wideboard.Shader.prototype.setUniforms = function() {
     uniforms[i].glSet();
   }
 };
+
+/**
+ */
+wideboard.Shader.prototype.bind = function() {
+  this.gl.useProgram(this.glProgram);
+  this.setUniforms();
+};

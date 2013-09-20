@@ -22,13 +22,13 @@ wideboard.Grid = function(draw, camera) {
  */
 wideboard.Grid.prototype.draw = function() {
   var pen = this.pen;
-  pen.color(0.8, 0.8, 1, 0.2);
-  for (var i = -30; i <= 30; i++) {
-    pen.moveTo(i * 10, -300);
-    pen.lineTo(i * 10, 300);
+  pen.color(0.8, 0.8, 1, 1.0);
+  for (var i = -5; i <= 5; i++) {
+    pen.moveTo(i * 16, -300);
+    pen.lineTo(i * 16, 300);
   }
-  for (var i = -30; i <= 30; i++) {
-    pen.moveTo(-300, i * 10);
-    pen.lineTo(300, i * 10);
+  for (var i = -5; i <= 5; i++) {
+    pen.moveTo(-300, i * 16);
+    pen.lineTo(300, i * 16);
   }
 };

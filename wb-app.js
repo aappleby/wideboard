@@ -133,7 +133,7 @@ wideboard.App.prototype.render = function() {
   var gl = this.context.gl;
 
   gl.viewport(0, 0, canvas.width, canvas.height);
-  gl.clearColor(0.6, 0.6, 0.7, 1);
+  gl.clearColor(0.3, 0.3, 0.4, 1);
   gl.clear(gl.COLOR_BUFFER_BIT);
 
   gl.disable(gl.DEPTH_TEST);
@@ -141,20 +141,26 @@ wideboard.App.prototype.render = function() {
   gl.enable(gl.BLEND);
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
-  var view = this.camera.view;
+  var view = this.camera.viewSnap;
 
-  this.uniforms['screenSize'].set(canvas.width, canvas.height);
+  var canvasLeft = -Math.round(canvas.width / 2.0);
+  var canvasTop = -Math.round(canvas.height / 2.0);
+
+  this.uniforms['screenSize'].set(canvasLeft, canvasTop, canvas.width, canvas.height);
   this.uniforms['modelToWorld'].set(0, 0, 1, 1);
-  this.uniforms['worldToView'].set(-view.origin.x, -view.origin.y, view.scale.x, view.scale.y);
+  this.uniforms['worldToView'].set(-view.origin.x, -view.origin.y,
+                                   view.scale, view.scale);
 
 
-  /*
   if (this.posBuffer && this.colBuffer && this.indexBuffer) {
+    this.uniforms['modelToWorld'].set(50, 50, 1, 1);
+
     var shader = this.simpleShader;
     var uniforms = shader.uniforms;
     var attributes = shader.attributes;
 
     gl.useProgram(shader.glProgram);
+    shader.setUniforms();
 
     attributes['vpos'].set2f(this.posBuffer.glBuffer, 0, 0);
     attributes['vcol'].set4f(this.colBuffer.glBuffer, 0, 0);
@@ -163,10 +169,10 @@ wideboard.App.prototype.render = function() {
 
     gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, 0);
   }
-  */
 
-  /*
   if (this.posBuffer && this.texBuffer && this.indexBuffer) {
+    this.uniforms['modelToWorld'].set(100, 100, 4, 4);
+
     var shader = this.texShader;
 
     gl.useProgram(shader.glProgram);
@@ -175,6 +181,8 @@ wideboard.App.prototype.render = function() {
     shader.attributes['vpos'].set2f(this.posBuffer.glBuffer, 8, 0);
     shader.attributes['vtex'].set2f(this.texBuffer.glBuffer, 8, 0);
 
+    shader.setUniforms();
+
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer.glBuffer);
 
     gl.activeTexture(gl.TEXTURE0);
@@ -182,12 +190,13 @@ wideboard.App.prototype.render = function() {
 
     gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, 0);
   }
-  */
 
   this.grid.draw();
   gl.useProgram(this.simpleShader.glProgram);
+  this.uniforms['modelToWorld'].set(0, 0, 1, 1);
   this.simpleShader.setUniforms();
   this.debugDraw.draw(this.simpleShader);
+  gl.useProgram(null);
 };
 
 
@@ -267,7 +276,7 @@ wideboard.App.prototype.run = function(canvasElementId) {
   this.indexBuffer = new wideboard.Buffer(gl, 'indices', gl.STATIC_DRAW);
   this.indexBuffer.initIndex8([0, 1, 2, 0, 2, 3]);
 
-  this.texture = new wideboard.Texture(gl, 256, 256);
+  this.texture = new wideboard.Texture(gl, 128, 128);
   this.texture.makeNoise();
 
   this.glyphTexture = new wideboard.Texture(gl, 256, 256);
@@ -278,7 +287,7 @@ wideboard.App.prototype.run = function(canvasElementId) {
 
   // Shaders
 
-  this.uniforms['screenSize'] = new wideboard.Uniform(gl, 'screenSize', gl.FLOAT_VEC2);
+  this.uniforms['screenSize'] = new wideboard.Uniform(gl, 'screenSize', gl.FLOAT_VEC4);
   this.uniforms['modelToWorld'] = new wideboard.Uniform(gl, 'modelToWorld', gl.FLOAT_VEC4);
   this.uniforms['worldToView'] = new wideboard.Uniform(gl, 'worldToView', gl.FLOAT_VEC4);
 

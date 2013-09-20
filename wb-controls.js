@@ -92,32 +92,42 @@ wideboard.Controls.prototype.onMouseUp = function(event) {
   }
 };
 
-/**
- * @param {!MouseEvent} event
- */
-wideboard.Controls.prototype.onMouseMove = function(event) {
-  this.mouseX = event.x;
-  this.mouseY = event.y;
 
+/**
+ * @param {number} mouseX
+ * @param {number} mouseY
+ */
+wideboard.Controls.prototype.handleMouseMove = function(mouseX, mouseY) {
   var targets = this.targets;
   if (this.mouseDown) {
     if (this.dragging) {
       for (var i = 0; i < targets.length; i++) {
-        targets[i].onDragUpdate(this.mouseX - this.mouseDownX,
-                                this.mouseY - this.mouseDownY);
+        targets[i].onDragUpdate(mouseX - this.mouseX,
+                                mouseY - this.mouseY);
       }
     } else {
-      if ((Math.abs(this.mouseDownX - event.x) > 5) ||
-          (Math.abs(this.mouseDownY - event.y) > 5)) {
+      if ((Math.abs(this.mouseDownX - mouseX) > 2) ||
+          (Math.abs(this.mouseDownY - mouseY) > 2)) {
         for (var i = 0; i < targets.length; i++) {
           targets[i].onDragBegin(this.mouseDownX, this.mouseDownY);
-          targets[i].onDragUpdate(this.mouseX - this.mouseDownX,
-                                  this.mouseY - this.mouseDownY);
+          targets[i].onDragUpdate(mouseX - this.mouseDownX,
+                                  mouseY - this.mouseDownY);
         }
         this.dragging = true;
       }
     }
   }
+
+  this.mouseX = mouseX;
+  this.mouseY = mouseY;
+};
+
+
+/**
+ * @param {!MouseEvent} event
+ */
+wideboard.Controls.prototype.onMouseMove = function(event) {
+  this.handleMouseMove(event.x, event.y);
 };
 
 
@@ -125,6 +135,7 @@ wideboard.Controls.prototype.onMouseMove = function(event) {
  * @param {!WheelEvent} event
  */
 wideboard.Controls.prototype.onMouseWheel = function(event) {
+  this.handleMouseMove(event.x, event.y);
   var targets = this.targets;
   for (var i = 0; i < targets.length; i++) {
     targets[i].onMouseWheel(event.x, event.y, event.wheelDelta > 0 ? 1 : -1);
