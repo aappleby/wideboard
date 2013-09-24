@@ -17,9 +17,8 @@ void main(void) {
   p += modelToWorld.xy;
   p += worldToView.xy;
   p *= worldToView.zw;
-  //p += vec2(0.5, 0.5);
   p -= screenSize.xy;
-  p /= screenSize.zw;
+  p *= screenSize.zw;
   p *= 2.0;
   p -= vec2(1.0, 1.0);
   p *= vec2(1.0, -1.0);

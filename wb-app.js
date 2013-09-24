@@ -146,14 +146,14 @@ wideboard.App.prototype.render = function() {
   var canvasLeft = -Math.round(canvas.width / 2.0);
   var canvasTop = -Math.round(canvas.height / 2.0);
 
-  this.uniforms['screenSize'].set(canvasLeft, canvasTop, canvas.width, canvas.height);
+  this.uniforms['screenSize'].set(canvasLeft, canvasTop, 1.0 / canvas.width, 1.0 / canvas.height);
   this.uniforms['modelToWorld'].set(0, 0, 1, 1);
   this.uniforms['worldToView'].set(-view.origin.x, -view.origin.y,
                                    view.scale, view.scale);
 
 
   if (this.posBuffer && this.colBuffer && this.indexBuffer) {
-    this.uniforms['modelToWorld'].set(50, 50, 32, 32);
+    this.uniforms['modelToWorld'].set(-50, 50, 32, 32);
 
     var shader = this.simpleShader;
     var uniforms = shader.uniforms;
@@ -192,14 +192,14 @@ wideboard.App.prototype.render = function() {
   }  
 
   if (this.posBuffer && this.texBuffer && this.indexBuffer) {
-    this.uniforms['modelToWorld'].set(100.5, 100.5, 32 * 6, 32 * 14);
+    this.uniforms['modelToWorld'].set(80, 80, 32 * 6, 32 * 14);
 
     var shader = this.textShader;
 
     gl.useProgram(shader.glProgram);
 
-    shader.uniforms['docmap'].set1i(0);
-    shader.uniforms['glyphmap'].set1i(1);
+    if (shader.uniforms['docmap']) shader.uniforms['docmap'].set1i(0);
+    if (shader.uniforms['glyphmap']) shader.uniforms['glyphmap'].set1i(1);
     shader.attributes['vpos'].set2f(this.posBuffer.glBuffer, 8, 0);
     shader.attributes['vtex'].set2f(this.texBuffer.glBuffer, 8, 0);
 
@@ -209,6 +209,7 @@ wideboard.App.prototype.render = function() {
 
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this.docTexture.glTexture);
+    
     gl.activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D, this.glyphTexture.glTexture);
 
@@ -303,7 +304,7 @@ wideboard.App.prototype.run = function(canvasElementId) {
   this.texture = new wideboard.Texture(gl, 128, 128);
   this.texture.makeNoise();
 
-  this.docTexture = new wideboard.Texture(gl, 32, 32, false);
+  this.docTexture = new wideboard.Texture(gl, 32, 32);
   this.docTexture.makeLoremIpsum();
 
   this.glyphTexture = new wideboard.Texture(gl, 256, 256);
