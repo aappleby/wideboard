@@ -138,6 +138,6 @@ wideboard.Controls.prototype.onMouseWheel = function(event) {
   this.handleMouseMove(event.x, event.y);
   var targets = this.targets;
   for (var i = 0; i < targets.length; i++) {
-    targets[i].onMouseWheel(event.x, event.y, event.wheelDelta > 0 ? 1 : -1);
+    targets[i].onMouseWheel(event.x, event.y, event.wheelDelta); //event.wheelDelta > 0 ? 1 : -1);
   }
 };

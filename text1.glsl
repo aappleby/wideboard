@@ -2,7 +2,8 @@ uniform vec4 modelToWorld;
 uniform vec4 worldToView;
 uniform vec4 screenSize;
 
-uniform sampler2D texture;
+uniform sampler2D docmap;
+uniform sampler2D glyphmap;
 
 attribute vec2 vpos;
 attribute vec2 vtex;
@@ -30,7 +31,31 @@ void main(void) {
 #else
 
 void main(void) {
-  gl_FragColor = texture2D(texture, ftex);
+  const vec2 docmapSize = vec2(32.0, 32.0);
+  const vec2 glyphmapSize = vec2(256.0, 256.0);
+  const vec2 glyphSize = vec2(6.0, 14.0);
+  const vec2 glyphOffset = vec2(0.0, 1.0);
+  const vec2 cellSize = vec2(8.0, 16.0);
+  const float glyphsPerRow = glyphmapSize.x / cellSize.x;
+  const float glyphsPerCol = glyphmapSize.y / cellSize.y;
+
+  vec2 docFract = (ftex + vec2(0.000001, 0.000001)) * docmapSize;
+  vec2 docInt = floor(docFract);
+  docFract -= docInt;
+
+  // Read docmap, convert [0,1] color to [0,255] glyph index.
+  float glyphIndex = texture2D(docmap, (docInt + vec2(0.5, 0.5)) / docmapSize).r * 255.0;
+
+  vec2 glyphInt = vec2(mod(glyphIndex, glyphsPerRow),
+                       floor(glyphIndex / glyphsPerRow));
+
+  vec2 glyphLoc = glyphInt * cellSize + docFract * glyphSize + glyphOffset;
+
+  vec2 glyphSamplePos = fract(glyphLoc);
+
+  float result = texture2D(glyphmap, glyphLoc / glyphmapSize).r;
+
+  gl_FragColor = vec4(glyphSamplePos.x, result, glyphSamplePos.y, 1.0);
 }
 
 #endif

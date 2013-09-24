@@ -7,10 +7,11 @@ goog.require('goog.asserts');
  * @param {!WebGLRenderingContext} gl
  * @param {number} width
  * @param {number} height
+ * @param {boolean=} opt_filter
  * @constructor
  * @struct
  */
-wideboard.Texture = function(gl, width, height) {
+wideboard.Texture = function(gl, width, height, opt_filter) {
   /** @type {!WebGLRenderingContext} */
   this.gl = gl;
 
@@ -24,6 +25,9 @@ wideboard.Texture = function(gl, width, height) {
   this.height = height;
 
   /** @type {boolean} */
+  this.filter = goog.isDef(opt_filter) ? opt_filter : true;
+
+  /** @type {boolean} */
   this.ready = false;
 
   this.init();
@@ -35,10 +39,11 @@ wideboard.Texture = function(gl, width, height) {
  */
 wideboard.Texture.prototype.init = function() {
   var gl = this.gl;
+  var filter = this.filter ? gl.LINEAR : gl.NEAREST;
 
   gl.bindTexture(gl.TEXTURE_2D, this.glTexture);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
@@ -60,6 +65,10 @@ wideboard.Texture.prototype.load = function(url) {
   image.onload = function() {
     gl.bindTexture(gl.TEXTURE_2D, self.glTexture);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+    if (self.filter) {
+      //gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+      //gl.generateMipmap(gl.TEXTURE_2D);
+    }
     self.ready = true;
   };
   image.src = url;
@@ -84,6 +93,7 @@ wideboard.Texture.prototype.makeLoremIpsum = function() {
   for (var j = 0; j < this.height; j++) {
     for (var i = 0; i < this.width; i++) {
       data[cursor] = text.charCodeAt(cursor % text.length) | 0xFF000000;
+      //data[cursor] = 0xFF000000 | (16 * 16 - 1);
       cursor++;
     }
   }

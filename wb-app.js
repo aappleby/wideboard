@@ -153,7 +153,7 @@ wideboard.App.prototype.render = function() {
 
 
   if (this.posBuffer && this.colBuffer && this.indexBuffer) {
-    this.uniforms['modelToWorld'].set(50, 50, 1, 1);
+    this.uniforms['modelToWorld'].set(50, 50, 32, 32);
 
     var shader = this.simpleShader;
     var uniforms = shader.uniforms;
@@ -169,9 +169,9 @@ wideboard.App.prototype.render = function() {
 
     gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, 0);
   }
-
+  
   if (this.posBuffer && this.texBuffer && this.indexBuffer) {
-    this.uniforms['modelToWorld'].set(100, 100, 4, 4);
+    this.uniforms['modelToWorld'].set(100, -300, 256, 256);
 
     var shader = this.texShader;
 
@@ -186,7 +186,31 @@ wideboard.App.prototype.render = function() {
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer.glBuffer);
 
     gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, this.texture.glTexture);
+    gl.bindTexture(gl.TEXTURE_2D, this.glyphTexture.glTexture);
+
+    gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, 0);
+  }  
+
+  if (this.posBuffer && this.texBuffer && this.indexBuffer) {
+    this.uniforms['modelToWorld'].set(100.5, 100.5, 32 * 6, 32 * 14);
+
+    var shader = this.textShader;
+
+    gl.useProgram(shader.glProgram);
+
+    shader.uniforms['docmap'].set1i(0);
+    shader.uniforms['glyphmap'].set1i(1);
+    shader.attributes['vpos'].set2f(this.posBuffer.glBuffer, 8, 0);
+    shader.attributes['vtex'].set2f(this.texBuffer.glBuffer, 8, 0);
+
+    shader.setUniforms();
+
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer.glBuffer);
+
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this.docTexture.glTexture);
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, this.glyphTexture.glTexture);
 
     gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, 0);
   }
@@ -260,7 +284,7 @@ wideboard.App.prototype.run = function(canvasElementId) {
   this.grid = new wideboard.Grid(this.debugDraw, this.camera);
 
   this.posBuffer = new wideboard.Buffer(gl, 'vpos', gl.STATIC_DRAW);
-  this.posBuffer.initVec2([0, 0, 0, 64, 64, 64, 64, 0]);
+  this.posBuffer.initVec2([0, 0, 0, 1, 1, 1, 1, 0]);
 
   this.colBuffer = new wideboard.Buffer(gl, 'vcol', gl.STATIC_DRAW);
   this.colBuffer.initVec4([
@@ -279,11 +303,11 @@ wideboard.App.prototype.run = function(canvasElementId) {
   this.texture = new wideboard.Texture(gl, 128, 128);
   this.texture.makeNoise();
 
+  this.docTexture = new wideboard.Texture(gl, 32, 32, false);
+  this.docTexture.makeLoremIpsum();
+
   this.glyphTexture = new wideboard.Texture(gl, 256, 256);
   this.glyphTexture.load('terminus.bmp');
-
-  this.docTexture = new wideboard.Texture(gl, 32, 32);
-  this.docTexture.makeLoremIpsum();
 
   // Shaders
 

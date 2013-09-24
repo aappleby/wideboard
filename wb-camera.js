@@ -59,12 +59,14 @@ wideboard.Camera.prototype.onMouseClick = function(x, y) {
  * @param {number} delta
  */
 wideboard.Camera.prototype.onMouseWheel = function(x, y, delta) {
+  delta = (delta > 0) - (delta < 0);
+
   var oldZoom = Math.log(this.viewGoal.scale) / Math.log(2);
   var step = 1.0;
   oldZoom = Math.round(oldZoom / step) * step;
   var newZoom = oldZoom + delta * step;
   if (newZoom < -4) newZoom = -4;
-  if (newZoom > 4) newZoom = 4;
+  if (newZoom > 8) newZoom = 8;
   var newDelta = newZoom - oldZoom;
 
   // Convert from screen space to graph space.
