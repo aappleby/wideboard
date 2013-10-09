@@ -79,82 +79,16 @@ wideboard.Texture.prototype.load = function(url) {
   image.src = url;
 };
 
-var linePos = [];
-var lineLength = [];
-
-
-/**
- * @param {!XMLHttpRequest} xhr
- */
-wideboard.Texture.prototype.onDocLoad = function(xhr) {
-  var response = /** @type {!ArrayBuffer} */(xhr.response);
-  var bytes = new Uint8Array(response);
-
-  var cursor = 0;
-
-  // Skip byte order mark if present.
-  if (bytes[0] == 239) {
-    cursor = 3;
-  }
-
-  var end = bytes.length;
-  var lineStart = cursor;
-
-  for (var i = cursor; i < bytes.length; i++) {
-
-    if (bytes[i] == 10) {
-      // Hit a \n.
-      linePos.push(cursor);
-      lineLength.push(i - cursor);
-      cursor = i + 1;
-    }
-  }
-  if (cursor < bytes.length) {
-    linePos.push(cursor);
-    lineLength.push(i - cursor - 1);
-  }
-
-  var data = new Uint8Array(this.width * this.height);
-  data.set(bytes);
-  var blob = new Uint8Array(data.buffer);
-
-  var gl = this.gl;
-  gl.bindTexture(gl.TEXTURE_2D, this.glTexture);
-  gl.texImage2D(gl.TEXTURE_2D, 0, this.format,
-                this.width, this.height, 0,
-                this.format, gl.UNSIGNED_BYTE, blob);
-  this.ready = true;
-};
-
-
-/**
- */
-wideboard.Texture.prototype.makeLinemap = function() {
-  var xhr1 = new XMLHttpRequest();
-  xhr1.open('GET', 'wb-app.js');
-  xhr1.responseType = 'arraybuffer';
-
-  xhr1.onload = goog.bind(this.onDocLoad, this, xhr1);
-
-  xhr1.send();
-};
-
 
 /**
  * Generates a texture where each texel stores a location in the linemap and
  * the length of the line.
+ * @param {!Array.<number>} linePos
+ * @param {!Array.<number>} lineLength
  */
-wideboard.Texture.prototype.makeDocmap = function() {
+wideboard.Texture.prototype.makeDocmap = function(linePos, lineLength) {
   var gl = this.gl;
   var data = new Uint32Array(this.width * this.height);
-  /*
-  for (var j = 0; j < this.height; j++) {
-    for (var i = 0; i < this.width; i++) {
-      data[j * this.width + i] = (lineLength[i] << 24) | linePos[i];
-      //data[j * this.width + i] = (255 << 24) | (255 * i);
-    }
-  }
-  */
   for (var i = 0; i < lineLength.length; i++) {
     data[i] = (lineLength[i] << 24) | linePos[i];
   }

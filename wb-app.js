@@ -9,6 +9,7 @@ goog.require('wideboard.Context');
 goog.require('wideboard.Controls');
 goog.require('wideboard.Draw');
 goog.require('wideboard.Grid');
+goog.require('wideboard.Linemap');
 goog.require('wideboard.Shader');
 goog.require('wideboard.Texture');
 
@@ -61,7 +62,7 @@ wideboard.App = function() {
   /** @type {wideboard.Texture} */
   this.docmap = null;
 
-  /** @type {wideboard.Texture} */
+  /** @type {wideboard.Linemap} */
   this.linemap = null;
 
   /** @type {wideboard.Texture} */
@@ -134,7 +135,7 @@ wideboard.App.prototype.beginFrame = function() {
  */
 wideboard.App.prototype.render = function() {
   var canvas = this.context.canvas;
-  var gl = this.context.gl;
+  var gl = this.context.getGl();
 
   gl.viewport(0, 0, canvas.width, canvas.height);
   gl.clearColor(0.3, 0.3, 0.4, 1);
@@ -145,8 +146,8 @@ wideboard.App.prototype.render = function() {
   gl.enable(gl.BLEND);
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
-  if (this.linemap.ready && !this.docmap.ready) {
-    this.docmap.makeDocmap();
+  if (this.linemap.texture.ready && !this.docmap.ready) {
+    this.docmap.makeDocmap(this.linemap.linePos, this.linemap.lineLength);
   }
 
   var view = this.camera.viewSnap;
@@ -214,7 +215,7 @@ wideboard.App.prototype.render = function() {
 
     gl.useProgram(shader.glProgram);
 
-    shader.uniforms['docSize'].set2f(120, linePos.length);
+    shader.uniforms['docSize'].set2f(120, this.linemap.linePos.length);
     shader.uniforms['docScroll'].set1f(0);
     shader.uniforms['docmap'].set1i(0);
     shader.uniforms['docmapSize'].set2f(this.docmap.width, this.docmap.height);
@@ -224,7 +225,7 @@ wideboard.App.prototype.render = function() {
     shader.uniforms['linemap'].set1i(1);
     shader.uniforms['linemapSize'].set2f(this.linemap.width, this.linemap.height);
     gl.activeTexture(gl.TEXTURE1);
-    gl.bindTexture(gl.TEXTURE_2D, this.linemap.glTexture);
+    gl.bindTexture(gl.TEXTURE_2D, this.linemap.texture.glTexture);
 
     shader.uniforms['glyphmap'].set1i(2);
     shader.uniforms['glyphmapSize'].set2f(this.glyphmap.width, this.glyphmap.height);
@@ -293,10 +294,9 @@ wideboard.App.prototype.run = function(canvasElementId) {
 
   var context = new wideboard.Context(canvas);
   if (!context) return;
-  if (!context.gl) return;
   this.context = context;
 
-  var gl = context.gl;
+  var gl = context.getGl();
 
   // Hook the controls up.
   this.controls.install(canvas);
@@ -328,8 +328,10 @@ wideboard.App.prototype.run = function(canvasElementId) {
   this.texture = new wideboard.Texture(gl, 128, 128, gl.RGBA, true);
   this.texture.makeNoise();
 
-  this.linemap = new wideboard.Texture(gl, 2048, 2048, gl.LUMINANCE, false);
-  this.linemap.makeLinemap();
+  //this.linemap = new wideboard.Texture(gl, 2048, 2048, gl.LUMINANCE, false);
+  //this.linemap.makeLinemap();
+  this.linemap = new wideboard.Linemap(this.context, 2048, 2048);
+  this.linemap.load('wb-app.js');
 
   this.docmap = new wideboard.Texture(gl, 1024, 1024, gl.RGBA, false);
 

@@ -1,3 +1,6 @@
+/**
+ * Handles context creation/destruction, might do state tracking later...
+ */
 goog.provide('wideboard.Context');
 
 
@@ -11,8 +14,8 @@ wideboard.Context = function(canvas) {
   /** @type {!HTMLCanvasElement} */
   this.canvas = canvas;
 
-  /** @type {WebGLRenderingContext} */
-  this.gl = null;
+  /** @private {WebGLRenderingContext} */
+  this.gl_ = null;
 
   /** @type {Object} */
   this.instanceExtension = null;
@@ -37,6 +40,14 @@ wideboard.Context = function(canvas) {
 
 
 /**
+ * @return {!WebGLRenderingContext}
+ */
+wideboard.Context.prototype.getGl = function() {
+  return /** @type {!WebGLRenderingContext} */(this.gl_);
+};
+
+
+/**
  */
 wideboard.Context.prototype.init = function() {
   // Create the GL context & kick off the render loop.
@@ -49,13 +60,13 @@ wideboard.Context.prototype.init = function() {
     preserveDrawingBuffer: true
   };
 
-  this.gl = /** @type {WebGLRenderingContext} */(this.canvas.getContext('webgl', options));
-  if (!this.gl) {
-    goog.global.console.log('Creating WebGL context failed');
+  this.gl_ = /** @type {WebGLRenderingContext} */(this.canvas.getContext('webgl', options));
+  if (!this.gl_) {
+    goog.asserts.fail('Creating WebGL context failed');
     return;
   }
 
-  this.instanceExtension = this.gl.getExtension('ANGLE_instanced_arrays');
+  this.instanceExtension = this.gl_.getExtension('ANGLE_instanced_arrays');
 };
 
 
