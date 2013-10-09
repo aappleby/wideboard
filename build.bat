@@ -20,6 +20,7 @@ java -jar compiler.jar ^
 --js closure-library/closure/goog/math/size.js ^
 --js closure-library/closure/goog/math/rect.js ^
 --js closure-library/closure/goog/webgl/webgl.js ^
+--js wb-bitvec.js ^
 --js wb-dragtarget.js ^
 --js wb-util.js ^
 --js wb-camera.js ^
@@ -28,12 +29,14 @@ java -jar compiler.jar ^
 --js wb-attribute.js ^
 --js wb-uniform.js ^
 --js wb-buffer.js ^
---js wb-draw.js ^
 --js wb-grid.js ^
 --js wb-file.js ^
 --js wb-shader.js ^
+--js wb-draw.js ^
 --js wb-texture.js ^
+--js wb-linemap.js ^
 --js wb-document.js ^
+--js wb-scrap.js ^
 --js wb-app.js ^
 --js_output_file wideboard-compiled.js
 
