@@ -59,10 +59,13 @@ wideboard.App = function() {
   this.texture = null;
 
   /** @type {wideboard.Texture} */
-  this.glyphTexture = null;
+  this.docmap = null;
 
   /** @type {wideboard.Texture} */
-  this.docTexture = null;
+  this.linemap = null;
+
+  /** @type {wideboard.Texture} */
+  this.glyphmap = null;
 
   /** @type {wideboard.Uniform} */
   this.screenUniform = null;
@@ -124,6 +127,7 @@ wideboard.App.prototype.beginFrame = function() {
   return true;
 };
 
+//======================================================================================================================
 
 /**
  * Main render function.
@@ -141,6 +145,10 @@ wideboard.App.prototype.render = function() {
   gl.enable(gl.BLEND);
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
+  if (this.linemap.ready && !this.docmap.ready) {
+    this.docmap.makeDocmap();
+  }
+
   var view = this.camera.viewSnap;
 
   var canvasLeft = -Math.round(canvas.width / 2.0);
@@ -151,7 +159,14 @@ wideboard.App.prototype.render = function() {
   this.uniforms['worldToView'].set(-view.origin.x, -view.origin.y,
                                    view.scale, view.scale);
 
+  this.grid.draw();
+  gl.useProgram(this.simpleShader.glProgram);
+  this.uniforms['modelToWorld'].set(0, 0, 1, 1);
+  this.simpleShader.setUniforms();
+  this.debugDraw.draw(this.simpleShader);
+  gl.useProgram(null);
 
+  /*
   if (this.posBuffer && this.colBuffer && this.indexBuffer) {
     this.uniforms['modelToWorld'].set(-50, 50, 32, 32);
 
@@ -169,9 +184,10 @@ wideboard.App.prototype.render = function() {
 
     gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, 0);
   }
-  
+  */
+
   if (this.posBuffer && this.texBuffer && this.indexBuffer) {
-    this.uniforms['modelToWorld'].set(100, -300, 256, 256);
+    this.uniforms['modelToWorld'].set(0, -300, 256, 256);
 
     var shader = this.texShader;
 
@@ -186,20 +202,38 @@ wideboard.App.prototype.render = function() {
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer.glBuffer);
 
     gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, this.glyphTexture.glTexture);
+    gl.bindTexture(gl.TEXTURE_2D, this.glyphmap.glTexture);
 
     gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, 0);
-  }  
+  }
 
   if (this.posBuffer && this.texBuffer && this.indexBuffer) {
-    this.uniforms['modelToWorld'].set(80, 80, 32 * 6, 32 * 14);
+    this.uniforms['modelToWorld'].set(0, 0, 1, 1);
 
     var shader = this.textShader;
 
     gl.useProgram(shader.glProgram);
 
-    if (shader.uniforms['docmap']) shader.uniforms['docmap'].set1i(0);
-    if (shader.uniforms['glyphmap']) shader.uniforms['glyphmap'].set1i(1);
+    shader.uniforms['docSize'].set2f(120, linePos.length);
+    shader.uniforms['docScroll'].set1f(0);
+    shader.uniforms['docmap'].set1i(0);
+    shader.uniforms['docmapSize'].set2f(this.docmap.width, this.docmap.height);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this.docmap.glTexture);
+
+    shader.uniforms['linemap'].set1i(1);
+    shader.uniforms['linemapSize'].set2f(this.linemap.width, this.linemap.height);
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, this.linemap.glTexture);
+
+    shader.uniforms['glyphmap'].set1i(2);
+    shader.uniforms['glyphmapSize'].set2f(this.glyphmap.width, this.glyphmap.height);
+    shader.uniforms['glyphSize'].set2f(6, 13);
+    shader.uniforms['cellSize'].set2f(8, 16);
+    gl.activeTexture(gl.TEXTURE2);
+    gl.bindTexture(gl.TEXTURE_2D, this.glyphmap.glTexture);
+
+
     shader.attributes['vpos'].set2f(this.posBuffer.glBuffer, 8, 0);
     shader.attributes['vtex'].set2f(this.texBuffer.glBuffer, 8, 0);
 
@@ -207,23 +241,11 @@ wideboard.App.prototype.render = function() {
 
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer.glBuffer);
 
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, this.docTexture.glTexture);
-    
-    gl.activeTexture(gl.TEXTURE1);
-    gl.bindTexture(gl.TEXTURE_2D, this.glyphTexture.glTexture);
-
     gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, 0);
   }
-
-  this.grid.draw();
-  gl.useProgram(this.simpleShader.glProgram);
-  this.uniforms['modelToWorld'].set(0, 0, 1, 1);
-  this.simpleShader.setUniforms();
-  this.debugDraw.draw(this.simpleShader);
-  gl.useProgram(null);
 };
 
+//======================================================================================================================
 
 /**
  *
@@ -231,6 +253,7 @@ wideboard.App.prototype.render = function() {
 wideboard.App.prototype.endFrame = function() {
 };
 
+//======================================================================================================================
 
 /**
  * requestAnimationFrame callback.
@@ -254,6 +277,7 @@ wideboard.App.prototype.onRequestAnimationFrame = function(time) {
   window.requestAnimationFrame(this.frameCallback);
 };
 
+//======================================================================================================================
 
 /**
  * Entry point for the Wideboard app.
@@ -301,14 +325,16 @@ wideboard.App.prototype.run = function(canvasElementId) {
   this.indexBuffer = new wideboard.Buffer(gl, 'indices', gl.STATIC_DRAW);
   this.indexBuffer.initIndex8([0, 1, 2, 0, 2, 3]);
 
-  this.texture = new wideboard.Texture(gl, 128, 128);
+  this.texture = new wideboard.Texture(gl, 128, 128, gl.RGBA, true);
   this.texture.makeNoise();
 
-  this.docTexture = new wideboard.Texture(gl, 32, 32);
-  this.docTexture.makeLoremIpsum();
+  this.linemap = new wideboard.Texture(gl, 2048, 2048, gl.LUMINANCE, false);
+  this.linemap.makeLinemap();
 
-  this.glyphTexture = new wideboard.Texture(gl, 256, 256);
-  this.glyphTexture.load('terminus.bmp');
+  this.docmap = new wideboard.Texture(gl, 1024, 1024, gl.RGBA, false);
+
+  this.glyphmap = new wideboard.Texture(gl, 256, 256, gl.LUMINANCE, true);
+  this.glyphmap.load('terminus.bmp');
 
   // Shaders
 

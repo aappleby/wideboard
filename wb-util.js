@@ -109,7 +109,6 @@ wideboard.util.easeView = function(view, goal, delta, canvas) {
 
   // If we're within 3% of the goal scale, and 1/3 a pixel of the goal origin,
   // snap to the goal.
-
   var ds = view.scale / goal.scale;
   if ((ds < 0.99) || (ds > 1.01)) return;
 

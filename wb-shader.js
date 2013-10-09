@@ -51,6 +51,22 @@ wideboard.Shader = function(gl, filename, opt_uniforms) {
 };
 
 
+function glStringToType(gl, t) {
+  switch (t) {
+  case 'float': return gl.FLOAT;
+  case 'vec2': return gl.FLOAT_VEC2;
+  case 'vec3': return gl.FLOAT_VEC3;
+  case 'vec4': return gl.FLOAT_VEC4;
+  case 'mat2': return gl.FLOAT_MAT2;
+  case 'mat3': return gl.FLOAT_MAT3;
+  case 'mat4': return gl.FLOAT_MAT4;
+  case 'sampler2D': return gl.SAMPLER_2D;
+  default: goog.asserts.fail('Unknown GLSL type'); return -1;
+  }
+}
+
+
+
 /**
  */
 wideboard.Shader.prototype.init = function() {
@@ -60,6 +76,39 @@ wideboard.Shader.prototype.init = function() {
   var source = xhr1.responseText;
 
   var gl = this.gl;
+  goog.asserts.assert(gl);
+
+  var tokenMatch = /\w+/g;
+  var lines = source.split('\n');
+  for (var i = 0; i < lines.length; i++) {
+    // Skip commented-out lines.
+    if (lines[i][0] == '/') continue;
+
+    var tokens = lines[i].match(tokenMatch);
+    if (!tokens) continue;
+    if (tokens.length < 3) continue;
+
+    if (tokens[0] == 'uniform') {
+      var uniformType = tokens[1];
+      var uniformName = tokens[2];
+      console.log('Uniform ' + uniformType + ' ' + uniformName + ' ' + glStringToType(gl, uniformType));
+
+      var globalUniform = this.globalUniforms[uniformName];
+      var uniform = new wideboard.Uniform(gl, uniformName, glStringToType(gl, uniformType), null, globalUniform);
+      this.uniforms[uniformName] = uniform;
+      this.uniformList.push(uniform);
+    }
+
+    if (tokens[0] == 'attribute') {
+      var attributeType = tokens[1];
+      var attributeName = tokens[2];
+      console.log('Attribute ' + attributeType + ' ' + attributeName + ' ' + glStringToType(gl, attributeType));
+
+      var attribute = new wideboard.Attribute(gl, attributeName, glStringToType(gl, attributeType));
+      this.attributes[attributeName] = attribute;
+      this.attributeList.push(attribute);
+    }
+  }
 
   var prefix = '#ifdef _FRAGMENT_\n' +
                '#define attribute //attribute\n' +
@@ -100,9 +149,9 @@ wideboard.Shader.prototype.init = function() {
     var location = gl.getAttribLocation(this.glProgram, attribInfo.name);
     if (goog.isDefAndNotNull(location)) {
       goog.global.console.log(attribInfo);
-      var attribute = new wideboard.Attribute(gl, attribInfo.name, attribInfo.type, location);
-      this.attributes[attribInfo.name] = attribute;
-      this.attributeList.push(attribute);
+      var attribute = this.attributes[attribInfo.name];
+      goog.asserts.assert(attribute);
+      attribute.location = location;
     }
   }
 
@@ -113,10 +162,9 @@ wideboard.Shader.prototype.init = function() {
     var location = gl.getUniformLocation(this.glProgram, uniformInfo.name);
     if (goog.isDefAndNotNull(location)) {
       goog.global.console.log(uniformInfo);
-      var globalUniform = this.globalUniforms[uniformInfo.name];
-      var uniform = new wideboard.Uniform(gl, uniformInfo.name, uniformInfo.type, location, globalUniform);
-      this.uniforms[uniformInfo.name] = uniform;
-      this.uniformList.push(uniform);
+      var uniform = this.uniforms[uniformInfo.name];
+      goog.asserts.assert(uniform);
+      uniform.location = location;
     }
   }
 };

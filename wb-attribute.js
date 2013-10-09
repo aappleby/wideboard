@@ -5,11 +5,11 @@ goog.provide('wideboard.Attribute');
  * @param {!WebGLRenderingContext} gl
  * @param {string} name
  * @param {number} type
- * @param {number} location
+ * @param {number=} opt_location
  * @constructor
  * @struct
  */
-wideboard.Attribute = function(gl, name, type, location) {
+wideboard.Attribute = function(gl, name, type, opt_location) {
   /** @type {!WebGLRenderingContext} */
   this.gl = gl;
 
@@ -20,7 +20,7 @@ wideboard.Attribute = function(gl, name, type, location) {
   this.type = type;
 
   /** @type {number} */
-  this.location = location;
+  this.location = goog.isDefAndNotNull(opt_location) ? opt_location : -1;
 };
 
 /**
@@ -29,10 +29,12 @@ wideboard.Attribute = function(gl, name, type, location) {
  * @param {number} offset
  */
 wideboard.Attribute.prototype.set1f = function(buffer, stride, offset) {
-  var gl = this.gl;
-  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-  gl.enableVertexAttribArray(this.location);
-  gl.vertexAttribPointer(this.location, 1, gl.FLOAT, false, stride, offset);
+  if (this.location >= 0) {
+    var gl = this.gl;
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.enableVertexAttribArray(this.location);
+    gl.vertexAttribPointer(this.location, 1, gl.FLOAT, false, stride, offset);
+  }
 };
 
 /**
@@ -41,10 +43,12 @@ wideboard.Attribute.prototype.set1f = function(buffer, stride, offset) {
  * @param {number} offset
  */
 wideboard.Attribute.prototype.set2f = function(buffer, stride, offset) {
-  var gl = this.gl;
-  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-  gl.enableVertexAttribArray(this.location);
-  gl.vertexAttribPointer(this.location, 2, gl.FLOAT, false, stride, offset);
+  if (this.location >= 0) {
+    var gl = this.gl;
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.enableVertexAttribArray(this.location);
+    gl.vertexAttribPointer(this.location, 2, gl.FLOAT, false, stride, offset);
+  }
 };
 
 /**
@@ -53,10 +57,12 @@ wideboard.Attribute.prototype.set2f = function(buffer, stride, offset) {
  * @param {number} offset
  */
 wideboard.Attribute.prototype.set3f = function(buffer, stride, offset) {
-  var gl = this.gl;
-  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-  gl.enableVertexAttribArray(this.location);
-  gl.vertexAttribPointer(this.location, 3, gl.FLOAT, false, stride, offset);
+  if (this.location >= 0) {
+    var gl = this.gl;
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.enableVertexAttribArray(this.location);
+    gl.vertexAttribPointer(this.location, 3, gl.FLOAT, false, stride, offset);
+  }
 };
 
 /**
@@ -65,8 +71,10 @@ wideboard.Attribute.prototype.set3f = function(buffer, stride, offset) {
  * @param {number} offset
  */
 wideboard.Attribute.prototype.set4f = function(buffer, stride, offset) {
-  var gl = this.gl;
-  gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-  gl.enableVertexAttribArray(this.location);
-  gl.vertexAttribPointer(this.location, 4, gl.FLOAT, false, stride, offset);
+  if (this.location >= 0) {
+    var gl = this.gl;
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.enableVertexAttribArray(this.location);
+    gl.vertexAttribPointer(this.location, 4, gl.FLOAT, false, stride, offset);
+  }
 };

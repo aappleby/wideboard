@@ -7,11 +7,12 @@ goog.require('goog.asserts');
  * @param {!WebGLRenderingContext} gl
  * @param {number} width
  * @param {number} height
- * @param {boolean=} opt_filter
+ * @param {number} format
+ * @param {boolean} filter
  * @constructor
  * @struct
  */
-wideboard.Texture = function(gl, width, height, opt_filter) {
+wideboard.Texture = function(gl, width, height, format, filter) {
   /** @type {!WebGLRenderingContext} */
   this.gl = gl;
 
@@ -24,8 +25,11 @@ wideboard.Texture = function(gl, width, height, opt_filter) {
   /** @type {number} */
   this.height = height;
 
+  /** @type {number} */
+  this.format = format;
+
   /** @type {boolean} */
-  this.filter = goog.isDef(opt_filter) ? opt_filter : true;
+  this.filter = filter;
 
   /** @type {boolean} */
   this.ready = false;
@@ -47,11 +51,11 @@ wideboard.Texture.prototype.init = function() {
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA,
+  gl.texImage2D(gl.TEXTURE_2D, 0, this.format,
                 this.width, this.height, 0,
-                gl.RGBA, gl.UNSIGNED_BYTE, null);
+                this.format, gl.UNSIGNED_BYTE, null);
 
-  this.ready = true;
+  this.ready = false;
 };
 
 
@@ -61,47 +65,105 @@ wideboard.Texture.prototype.init = function() {
 wideboard.Texture.prototype.load = function(url) {
   var gl = this.gl;
   var image = new Image();
-  var self = this;
-  image.onload = function() {
-    gl.bindTexture(gl.TEXTURE_2D, self.glTexture);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+  image.onload = goog.bind(function() {
+    gl.bindTexture(gl.TEXTURE_2D, this.glTexture);
+    gl.texImage2D(gl.TEXTURE_2D, 0, this.format, this.format, gl.UNSIGNED_BYTE, image);
+    /*
     if (self.filter) {
-      //gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
-      //gl.generateMipmap(gl.TEXTURE_2D);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+      gl.generateMipmap(gl.TEXTURE_2D);
     }
-    self.ready = true;
-  };
+    */
+    this.ready = true;
+  }, this);
   image.src = url;
+};
+
+var linePos = [];
+var lineLength = [];
+
+
+/**
+ * @param {!XMLHttpRequest} xhr
+ */
+wideboard.Texture.prototype.onDocLoad = function(xhr) {
+  var response = /** @type {!ArrayBuffer} */(xhr.response);
+  var bytes = new Uint8Array(response);
+
+  var cursor = 0;
+
+  // Skip byte order mark if present.
+  if (bytes[0] == 239) {
+    cursor = 3;
+  }
+
+  var end = bytes.length;
+  var lineStart = cursor;
+
+  for (var i = cursor; i < bytes.length; i++) {
+
+    if (bytes[i] == 10) {
+      // Hit a \n.
+      linePos.push(cursor);
+      lineLength.push(i - cursor);
+      cursor = i + 1;
+    }
+  }
+  if (cursor < bytes.length) {
+    linePos.push(cursor);
+    lineLength.push(i - cursor - 1);
+  }
+
+  var data = new Uint8Array(this.width * this.height);
+  data.set(bytes);
+  var blob = new Uint8Array(data.buffer);
+
+  var gl = this.gl;
+  gl.bindTexture(gl.TEXTURE_2D, this.glTexture);
+  gl.texImage2D(gl.TEXTURE_2D, 0, this.format,
+                this.width, this.height, 0,
+                this.format, gl.UNSIGNED_BYTE, blob);
+  this.ready = true;
 };
 
 
 /**
  */
-wideboard.Texture.prototype.makeLoremIpsum = function() {
-  var text = 'Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed ' +
-             'do eiusmod tempor incididunt ut labore et dolore magna aliqua. ' +
-             'Ut enim ad minim veniam, quis nostrud exercitation ullamco ' +
-             'laboris nisi ut aliquip ex ea commodo consequat. Duis aute ' +
-             'irure dolor in reprehenderit in voluptate velit esse cillum ' +
-             'dolore eu fugiat nulla pariatur. Excepteur sint occaecat ' +
-             'cupidatat non proident, sunt in culpa qui officia deserunt ' +
-             'mollit anim id est laborum. ';
+wideboard.Texture.prototype.makeLinemap = function() {
+  var xhr1 = new XMLHttpRequest();
+  xhr1.open('GET', 'wb-app.js');
+  xhr1.responseType = 'arraybuffer';
 
+  xhr1.onload = goog.bind(this.onDocLoad, this, xhr1);
+
+  xhr1.send();
+};
+
+
+/**
+ * Generates a texture where each texel stores a location in the linemap and
+ * the length of the line.
+ */
+wideboard.Texture.prototype.makeDocmap = function() {
   var gl = this.gl;
   var data = new Uint32Array(this.width * this.height);
-  var cursor = 0;
+  /*
   for (var j = 0; j < this.height; j++) {
     for (var i = 0; i < this.width; i++) {
-      data[cursor] = text.charCodeAt(cursor % text.length) | 0xFF000000;
-      //data[cursor] = 0xFF000000 | (16 * 16 - 1);
-      cursor++;
+      data[j * this.width + i] = (lineLength[i] << 24) | linePos[i];
+      //data[j * this.width + i] = (255 << 24) | (255 * i);
     }
   }
+  */
+  for (var i = 0; i < lineLength.length; i++) {
+    data[i] = (lineLength[i] << 24) | linePos[i];
+  }
+
   var blob = new Uint8Array(data.buffer);
   gl.bindTexture(gl.TEXTURE_2D, this.glTexture);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA,
+  gl.texImage2D(gl.TEXTURE_2D, 0, this.format,
                 this.width, this.height, 0,
-                gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(data.buffer));
+                this.format, gl.UNSIGNED_BYTE, blob);
   this.ready = true;
 };
 
@@ -123,9 +185,9 @@ wideboard.Texture.prototype.makeChecker = function() {
   }
   var blob = new Uint8Array(data.buffer);
   gl.bindTexture(gl.TEXTURE_2D, this.glTexture);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA,
+  gl.texImage2D(gl.TEXTURE_2D, 0, this.format,
                 this.width, this.height, 0,
-                gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(data.buffer));
+                this.format, gl.UNSIGNED_BYTE, new Uint8Array(data.buffer));
   this.ready = true;
 };
 
@@ -149,9 +211,9 @@ wideboard.Texture.prototype.makeNoise = function() {
   }
   var blob = new Uint8Array(data.buffer);
   gl.bindTexture(gl.TEXTURE_2D, this.glTexture);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA,
+  gl.texImage2D(gl.TEXTURE_2D, 0, this.format,
                 this.width, this.height, 0,
-                gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(data.buffer));
+                this.format, gl.UNSIGNED_BYTE, new Uint8Array(data.buffer));
   this.ready = true;
 };
 

@@ -71,36 +71,46 @@ wideboard.Uniform = function(gl, name, type, opt_location, opt_parent) {
 /**
  */
 wideboard.Uniform.prototype.glSet1f = function() {
-  this.gl.uniform1f(this.location, this.value[0]);
-  this.dirty = false;
+  if (this.location) {
+    this.gl.uniform1f(this.location, this.value[0]);
+    this.dirty = false;
+  }
 };
 
 /**
  */
 wideboard.Uniform.prototype.glSet2f = function() {
-  this.gl.uniform2f(this.location, this.value[0], this.value[1]);
-  this.dirty = false;
+  if (this.location) {
+    this.gl.uniform2f(this.location, this.value[0], this.value[1]);
+    this.dirty = false;
+  }
 };
 
 /**
  */
 wideboard.Uniform.prototype.glSet3f = function() {
-  this.gl.uniform3f(this.location, this.value[0], this.value[1], this.value[2]);
-  this.dirty = false;
+  if (this.location) {
+    this.gl.uniform3f(this.location, this.value[0], this.value[1], this.value[2]);
+    this.dirty = false;
+  }
 };
 
 /**
  */
 wideboard.Uniform.prototype.glSet4f = function() {
-  this.gl.uniform4f(this.location, this.value[0], this.value[1], this.value[2], this.value[3]);
-  this.dirty = false;
+  if (this.location) {
+    this.gl.uniform4f(this.location, this.value[0], this.value[1], this.value[2], this.value[3]);
+    this.dirty = false;
+  }
 };
 
 /**
  */
 wideboard.Uniform.prototype.glSet1i = function() {
-  this.gl.uniform1i(this.location, this.value[0]);
-  this.dirty = false;
+  if (this.location) {
+    this.gl.uniform1i(this.location, this.value[0]);
+    this.dirty = false;
+  }
 };
 
 /**

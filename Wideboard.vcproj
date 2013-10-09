@@ -97,6 +97,10 @@
 			>
 		</File>
 		<File
+			RelativePath=".\wb-bitvec.js"
+			>
+		</File>
+		<File
 			RelativePath=".\wb-buffer.js"
 			>
 		</File>
@@ -130,6 +134,14 @@
 		</File>
 		<File
 			RelativePath=".\wb-grid.js"
+			>
+		</File>
+		<File
+			RelativePath=".\wb-linemap.js"
+			>
+		</File>
+		<File
+			RelativePath=".\wb-scrap.js"
 			>
 		</File>
 		<File

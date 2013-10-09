@@ -65,7 +65,7 @@ wideboard.Camera.prototype.onMouseWheel = function(x, y, delta) {
   var step = 1.0;
   oldZoom = Math.round(oldZoom / step) * step;
   var newZoom = oldZoom + delta * step;
-  if (newZoom < -4) newZoom = -4;
+  if (newZoom < -8) newZoom = -8;
   if (newZoom > 8) newZoom = 8;
   var newDelta = newZoom - oldZoom;
 
