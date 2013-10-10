@@ -203,7 +203,8 @@ wideboard.App.prototype.render = function() {
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer.glBuffer);
 
     gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, this.glyphmap.glTexture);
+    //gl.bindTexture(gl.TEXTURE_2D, this.glyphmap.glTexture);
+    gl.bindTexture(gl.TEXTURE_2D, this.linemap.texture.glTexture);
 
     gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, 0);
   }
@@ -229,7 +230,7 @@ wideboard.App.prototype.render = function() {
 
     shader.uniforms['glyphmap'].set1i(2);
     shader.uniforms['glyphmapSize'].set2f(this.glyphmap.width, this.glyphmap.height);
-    shader.uniforms['glyphSize'].set2f(6, 13);
+    shader.uniforms['glyphSize'].set2f(6, 14);
     shader.uniforms['cellSize'].set2f(8, 16);
     gl.activeTexture(gl.TEXTURE2);
     gl.bindTexture(gl.TEXTURE_2D, this.glyphmap.glTexture);
@@ -330,7 +331,7 @@ wideboard.App.prototype.run = function(canvasElementId) {
 
   //this.linemap = new wideboard.Texture(gl, 2048, 2048, gl.LUMINANCE, false);
   //this.linemap.makeLinemap();
-  this.linemap = new wideboard.Linemap(this.context, 2048, 2048);
+  this.linemap = new wideboard.Linemap(this.context, 128, 128);
   this.linemap.load('wb-app.js');
 
   this.docmap = new wideboard.Texture(gl, 1024, 1024, gl.RGBA, false);

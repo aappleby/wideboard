@@ -94,7 +94,7 @@ void main(void) {
   // Read output color from glyphmap.
   float result = texture2D(glyphmap, glyphLoc / glyphmapSize).r;
 
-  result = smoothstep(0.3, 0.6, result);
+  result = sqrt(result);//smoothstep(0.0, 0.6, result);
 
   gl_FragColor = vec4(result, result, result, 1.0);
 }

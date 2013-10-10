@@ -1,5 +1,6 @@
 goog.provide('wideboard.Linemap');
 
+goog.require('wideboard.Bitvec');
 goog.require('wideboard.Context');
 goog.require('wideboard.Texture');
 
@@ -43,6 +44,9 @@ wideboard.Linemap = function(context, width, height) {
   /** @type {!Array.<number>} */
   this.lineLength = [];
 
+  /** @type {!wideboard.Bitvec} */
+  this.bitvec = new wideboard.Bitvec(width * height);
+
   this.init();
 };
 
@@ -60,12 +64,12 @@ wideboard.Linemap.prototype.init = function() {
  * @return {number}
  */
 wideboard.Linemap.prototype.allocate = function(size) {
-  var result = this.cursorX + this.cursorY * this.width;
-  this.cursorX += size;
-  if (this.cursorX >= this.width) {
+  if (this.cursorX + size > this.width) {
     this.cursorX = 0;
     this.cursorY++;
   }
+  var result = this.cursorX + this.cursorY * this.width;
+  this.cursorX += size;
   return result;
 };
 
@@ -85,25 +89,36 @@ wideboard.Linemap.prototype.onDocLoad = function(xhr) {
     cursor = 3;
   }
 
+  var data = new Uint8Array(this.width * this.height);
   var end = bytes.length;
   var lineStart = cursor;
 
   for (var i = cursor; i < bytes.length; i++) {
 
     if (bytes[i] == 10) {
+      var lineLength = i - cursor;
+      var pos = this.allocate(lineLength);
+      for (var j = 0; j < lineLength; j++) {
+        data[pos + j] = bytes[cursor + j];
+      }
       // Hit a \n.
-      this.linePos.push(cursor);
-      this.lineLength.push(i - cursor);
+      this.linePos.push(pos);
+      this.lineLength.push(lineLength);
       cursor = i + 1;
     }
   }
   if (cursor < bytes.length) {
-    this.linePos.push(cursor);
-    this.lineLength.push(i - cursor - 1);
+    var lineLength = i - cursor;
+    var pos = this.allocate(lineLength);
+    for (var j = 0; j < lineLength; j++) {
+      data[pos + j] = bytes[cursor + j];
+    }
+    // Hit a \n.
+    this.linePos.push(pos);
+    this.lineLength.push(lineLength);
   }
 
-  var data = new Uint8Array(this.width * this.height);
-  data.set(bytes);
+  //data.set(bytes);
   var blob = new Uint8Array(data.buffer);
 
   var gl = this.context.getGl();

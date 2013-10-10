@@ -19,6 +19,12 @@ wideboard.Texture = function(gl, width, height, format, filter) {
   /** @type {!WebGLTexture} */
   this.glTexture = gl.createTexture();
 
+  /** @type {!WebGLTexture} */
+  this.texHalf = gl.createTexture();
+
+  /** @type {!WebGLTexture} */
+  this.texQuarter = gl.createTexture();
+
   /** @type {number} */
   this.width = width;
 
@@ -59,6 +65,36 @@ wideboard.Texture.prototype.init = function() {
 };
 
 
+function extractBytes(image) {
+  var canvas = document.createElement('canvas');
+  canvas.width = image.width;
+  canvas.height = image.height;
+  var context = canvas.getContext('2d');
+  context.drawImage(image, 0, 0);
+  var buffer = context.getImageData(0, 0, canvas.width, canvas.height).data;
+  return buffer;
+}
+
+function downscale(buffer, width, height) {
+  var width2 = width / 2;
+  var height2 = height / 2;
+
+  var out = new Uint8Array(width2 * height2);
+
+  for (var j = 0; j < height2; j++) {
+    for (var i = 0; i < width2; i++) {
+      var sum = 0;
+      sum += buffer[(i * 2 + 0) + (j * 2 + 0) * width];
+      sum += buffer[(i * 2 + 0) + (j * 2 + 1) * width];
+      sum += buffer[(i * 2 + 1) + (j * 2 + 0) * width];
+      sum += buffer[(i * 2 + 1) + (j * 2 + 1) * width];
+      out[i + j * width2] = sum / 4;
+    }
+  }
+
+  return out;
+}
+
 /**
  * @param {string} url
  */
@@ -66,8 +102,27 @@ wideboard.Texture.prototype.load = function(url) {
   var gl = this.gl;
   var image = new Image();
   image.onload = goog.bind(function() {
-    gl.bindTexture(gl.TEXTURE_2D, this.glTexture);
-    gl.texImage2D(gl.TEXTURE_2D, 0, this.format, this.format, gl.UNSIGNED_BYTE, image);
+    this.width = image.width;
+    this.height = image.height;
+
+    if (this.format == gl.LUMINANCE) {
+      var rgba = extractBytes(image);
+      var luminance = new Uint8Array(rgba.length / 4);
+      for (var i = 0; i < luminance.length; i++) {
+        luminance[i] = rgba[i * 4];
+      }
+      //luminance = downscale(luminance, this.width, this.height);
+      //this.width /= 2;
+      //this.height /= 2;
+      gl.bindTexture(gl.TEXTURE_2D, this.glTexture);
+      gl.texImage2D(gl.TEXTURE_2D, 0, this.format,
+                    this.width, this.height, 0,
+                    this.format, gl.UNSIGNED_BYTE, luminance);
+    } else {
+      gl.bindTexture(gl.TEXTURE_2D, this.glTexture);
+      gl.texImage2D(gl.TEXTURE_2D, 0, this.format, this.format, gl.UNSIGNED_BYTE, image);
+    }
+
     /*
     if (self.filter) {
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
