@@ -41,12 +41,6 @@ wideboard.Linemap = function(context, width, height) {
   /** @type {boolean} */
   this.dirty = true;
 
-  /** @type {!Array.<number>} */
-  this.linePos = [];
-
-  /** @type {!Array.<number>} */
-  this.lineLength = [];
-
   /** @type {!wideboard.Bitvec} */
   this.bitvec = new wideboard.Bitvec(width * height);
 
@@ -97,44 +91,6 @@ wideboard.Linemap.prototype.addLine = function(source, offset, length) {
 
 
 /**
- * @param {!Uint8Array} bytes
- */
-wideboard.Linemap.prototype.onDocLoad = function(bytes) {
-  var cursor = 0;
-
-  // Skip byte order mark if present.
-  if (bytes[0] == 239) {
-    cursor = 3;
-  }
-
-  var end = bytes.length;
-  var lineStart = cursor;
-
-  for (var i = cursor; i < bytes.length; i++) {
-
-    if (bytes[i] == 10) {
-      var lineLength = i - cursor;
-
-      var pos = this.addLine(bytes, cursor, lineLength);
-
-      this.linePos.push(pos);
-      this.lineLength.push(lineLength);
-      cursor = i + 1;
-    }
-  }
-  if (cursor < bytes.length) {
-    var lineLength = i - cursor;
-    var pos = this.addLine(bytes, cursor, lineLength);
-    // Hit a \n.
-    this.linePos.push(pos);
-    this.lineLength.push(lineLength);
-  }
-
-  this.updateTexture();
-};
-
-
-/**
  * TODO(aappleby): This should flush only dirty chunks of the linemap to the
  * GPU, but for now it's easier to flush the whole thing.
  */
@@ -146,24 +102,3 @@ wideboard.Linemap.prototype.updateTexture = function() {
                 this.texture.format, gl.UNSIGNED_BYTE, this.buffer);
   this.texture.ready = true;
 };
-
-
-/**
- * @param {string} filename
- */
-wideboard.Linemap.prototype.load = function(filename) {
-  var xhr1 = new XMLHttpRequest();
-  xhr1.open('GET', filename);
-  xhr1.responseType = 'arraybuffer';
-
-  var self = this;
-  xhr1.onload = function() {
-    var response = /** @type {!ArrayBuffer} */(xhr1.response);
-    var bytes = new Uint8Array(response);
-    self.onDocLoad(bytes);
-  };
-
-  xhr1.send();
-};
-
-

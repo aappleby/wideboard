@@ -61,9 +61,6 @@ wideboard.App = function() {
   /** @type {wideboard.Texture} */
   this.texture = null;
 
-  /** @type {wideboard.Texture} */
-  this.docmap = null;
-
   /** @type {wideboard.Linemap} */
   this.linemap = null;
 
@@ -154,10 +151,6 @@ wideboard.App.prototype.render = function() {
   gl.enable(gl.BLEND);
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
-  if (this.linemap.texture.ready && !this.docmap.ready) {
-    this.docmap.makeDocmap(this.linemap.linePos, this.linemap.lineLength);
-  }
-
   var view = this.camera.viewSnap;
 
   var canvasLeft = -Math.round(canvas.width / 2.0);
@@ -224,12 +217,12 @@ wideboard.App.prototype.render = function() {
 
     gl.useProgram(shader.glProgram);
 
-    shader.uniforms['docSize'].set2f(120, this.linemap.linePos.length);
+    shader.uniforms['docSize'].set2f(120, this.document.linePos.length);
     shader.uniforms['docScroll'].set1f(0);
     shader.uniforms['docmap'].set1i(0);
-    shader.uniforms['docmapSize'].set2f(this.docmap.width, this.docmap.height);
+    shader.uniforms['docmapSize'].set2f(this.shelf.width, this.shelf.height);
     gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, this.docmap.glTexture);
+    gl.bindTexture(gl.TEXTURE_2D, this.shelf.texture.glTexture);
 
     shader.uniforms['linemap'].set1i(1);
     shader.uniforms['linemapSize'].set2f(this.linemap.width, this.linemap.height);
@@ -340,13 +333,12 @@ wideboard.App.prototype.run = function(canvasElementId) {
   //this.linemap = new wideboard.Texture(gl, 2048, 2048, gl.LUMINANCE, false);
   //this.linemap.makeLinemap();
   this.linemap = new wideboard.Linemap(this.context, 128, 128);
-  this.linemap.load('wb-app.js');
+  //this.linemap.load('wb-app.js');
 
   this.shelf = new wideboard.Shelf(context);
 
   this.document = new wideboard.Document(this.shelf, this.linemap);
-
-  this.docmap = new wideboard.Texture(gl, 1024, 1024, gl.RGBA, false);
+  this.document.load('wb-app.js');
 
   this.glyphmap = new wideboard.Texture(gl, 256, 256, gl.LUMINANCE, true);
   this.glyphmap.load('terminus.bmp');

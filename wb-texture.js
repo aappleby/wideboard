@@ -136,28 +136,6 @@ wideboard.Texture.prototype.load = function(url) {
 
 
 /**
- * Generates a texture where each texel stores a location in the linemap and
- * the length of the line.
- * @param {!Array.<number>} linePos
- * @param {!Array.<number>} lineLength
- */
-wideboard.Texture.prototype.makeDocmap = function(linePos, lineLength) {
-  var gl = this.gl;
-  var data = new Uint32Array(this.width * this.height);
-  for (var i = 0; i < lineLength.length; i++) {
-    data[i] = (lineLength[i] << 24) | linePos[i];
-  }
-
-  var blob = new Uint8Array(data.buffer);
-  gl.bindTexture(gl.TEXTURE_2D, this.glTexture);
-  gl.texImage2D(gl.TEXTURE_2D, 0, this.format,
-                this.width, this.height, 0,
-                this.format, gl.UNSIGNED_BYTE, blob);
-  this.ready = true;
-};
-
-
-/**
  */
 wideboard.Texture.prototype.makeChecker = function() {
   var gl = this.gl;

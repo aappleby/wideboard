@@ -35,6 +35,12 @@ wideboard.Document = function(shelf, linemap) {
    * @type {number}
    */
   this.shelfPos = -1;
+
+  /**
+   * True when the document is loaded.
+   * @type {boolean}
+   */
+  this.ready = false;
 };
 
 
@@ -79,14 +85,15 @@ wideboard.Document.prototype.onLoad = function(bytes) {
   // Add the document to the shelf.
   this.shelfPos = this.shelf.addDocument(this.linePos, this.lineLength);
   this.shelf.updateTexture();
+
+  this.ready = true;
 };
 
 
 /**
  * @param {string} filename
- * @param {!wideboard.Linemap} linemap
  */
-wideboard.Document.prototype.load = function(filename, linemap) {
+wideboard.Document.prototype.load = function(filename) {
   var xhr1 = new XMLHttpRequest();
   xhr1.open('GET', filename);
   xhr1.responseType = 'arraybuffer';
