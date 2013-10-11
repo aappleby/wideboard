@@ -8,3 +8,5 @@ RemoteSystemsTempFiles
 closure-library
 compiler.jar
 plovr.jar
+*.WW
+warandpeace.txt

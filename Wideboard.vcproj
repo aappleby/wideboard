@@ -137,6 +137,10 @@
 			>
 		</File>
 		<File
+			RelativePath=".\wb-librarian.js"
+			>
+		</File>
+		<File
 			RelativePath=".\wb-linemap.js"
 			>
 		</File>

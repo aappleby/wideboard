@@ -68,6 +68,7 @@ java -jar compiler.jar ^
 --js wb-scrap.js ^
 --js wb-shelf.js ^
 --js wb-document.js ^
+--js wb-librarian.js ^
 --js wb-app.js ^
 --js_output_file wideboard-compiled.js
 
