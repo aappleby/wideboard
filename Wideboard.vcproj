@@ -149,6 +149,10 @@
 			>
 		</File>
 		<File
+			RelativePath=".\wb-shelf.js"
+			>
+		</File>
+		<File
 			RelativePath=".\wb-texture.js"
 			>
 		</File>

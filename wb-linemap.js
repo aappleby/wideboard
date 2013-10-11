@@ -26,6 +26,9 @@ wideboard.Linemap = function(context, width, height) {
   /** @type {wideboard.Texture} */
   this.texture = null;
 
+  /** @type {!Uint8Array} */
+  this.buffer = new Uint8Array(width * height);
+
   /**
    * Dumb initial implementation just has an allocation cursor.
    * @type {number}
@@ -56,6 +59,10 @@ wideboard.Linemap = function(context, width, height) {
 wideboard.Linemap.prototype.init = function() {
   var gl = this.context.getGl();
   this.texture = new wideboard.Texture(gl, 2048, 2048, gl.LUMINANCE, false);
+  gl.bindTexture(gl.TEXTURE_2D, this.texture.glTexture);
+  gl.texImage2D(gl.TEXTURE_2D, 0, this.texture.format,
+                this.width, this.height, 0,
+                this.texture.format, gl.UNSIGNED_BYTE, null);
 };
 
 
@@ -74,14 +81,25 @@ wideboard.Linemap.prototype.allocate = function(size) {
 };
 
 
+/**
+ * @param {!Uint8Array} source
+ * @param {number} offset
+ * @param {number} length
+ * @return {number}
+ */
+wideboard.Linemap.prototype.addLine = function(source, offset, length) {
+  var pos = this.allocate(length);
+  for (var j = 0; j < length; j++) {
+    this.buffer[pos + j] = source[offset + j];
+  }
+  return pos;
+};
+
 
 /**
- * @param {!XMLHttpRequest} xhr
+ * @param {!Uint8Array} bytes
  */
-wideboard.Linemap.prototype.onDocLoad = function(xhr) {
-  var response = /** @type {!ArrayBuffer} */(xhr.response);
-  var bytes = new Uint8Array(response);
-
+wideboard.Linemap.prototype.onDocLoad = function(bytes) {
   var cursor = 0;
 
   // Skip byte order mark if present.
@@ -89,7 +107,6 @@ wideboard.Linemap.prototype.onDocLoad = function(xhr) {
     cursor = 3;
   }
 
-  var data = new Uint8Array(this.width * this.height);
   var end = bytes.length;
   var lineStart = cursor;
 
@@ -97,11 +114,9 @@ wideboard.Linemap.prototype.onDocLoad = function(xhr) {
 
     if (bytes[i] == 10) {
       var lineLength = i - cursor;
-      var pos = this.allocate(lineLength);
-      for (var j = 0; j < lineLength; j++) {
-        data[pos + j] = bytes[cursor + j];
-      }
-      // Hit a \n.
+
+      var pos = this.addLine(bytes, cursor, lineLength);
+
       this.linePos.push(pos);
       this.lineLength.push(lineLength);
       cursor = i + 1;
@@ -109,23 +124,26 @@ wideboard.Linemap.prototype.onDocLoad = function(xhr) {
   }
   if (cursor < bytes.length) {
     var lineLength = i - cursor;
-    var pos = this.allocate(lineLength);
-    for (var j = 0; j < lineLength; j++) {
-      data[pos + j] = bytes[cursor + j];
-    }
+    var pos = this.addLine(bytes, cursor, lineLength);
     // Hit a \n.
     this.linePos.push(pos);
     this.lineLength.push(lineLength);
   }
 
-  //data.set(bytes);
-  var blob = new Uint8Array(data.buffer);
+  this.updateTexture();
+};
 
+
+/**
+ * TODO(aappleby): This should flush only dirty chunks of the linemap to the
+ * GPU, but for now it's easier to flush the whole thing.
+ */
+wideboard.Linemap.prototype.updateTexture = function() {
   var gl = this.context.getGl();
   gl.bindTexture(gl.TEXTURE_2D, this.texture.glTexture);
   gl.texImage2D(gl.TEXTURE_2D, 0, this.texture.format,
                 this.width, this.height, 0,
-                this.texture.format, gl.UNSIGNED_BYTE, blob);
+                this.texture.format, gl.UNSIGNED_BYTE, this.buffer);
   this.texture.ready = true;
 };
 
@@ -138,7 +156,12 @@ wideboard.Linemap.prototype.load = function(filename) {
   xhr1.open('GET', filename);
   xhr1.responseType = 'arraybuffer';
 
-  xhr1.onload = goog.bind(this.onDocLoad, this, xhr1);
+  var self = this;
+  xhr1.onload = function() {
+    var response = /** @type {!ArrayBuffer} */(xhr1.response);
+    var bytes = new Uint8Array(response);
+    self.onDocLoad(bytes);
+  };
 
   xhr1.send();
 };

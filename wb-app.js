@@ -7,10 +7,12 @@ goog.require('wideboard.Buffer');
 goog.require('wideboard.Camera');
 goog.require('wideboard.Context');
 goog.require('wideboard.Controls');
+goog.require('wideboard.Document');
 goog.require('wideboard.Draw');
 goog.require('wideboard.Grid');
 goog.require('wideboard.Linemap');
 goog.require('wideboard.Shader');
+goog.require('wideboard.Shelf');
 goog.require('wideboard.Texture');
 
 
@@ -70,6 +72,12 @@ wideboard.App = function() {
 
   /** @type {wideboard.Uniform} */
   this.screenUniform = null;
+
+  /** @type {wideboard.Shelf} */
+  this.shelf = null;
+
+  /** @type {wideboard.Document} */
+  this.document = null;
 
   /** @type {wideboard.Controls} */
   this.controls = new wideboard.Controls();
@@ -333,6 +341,10 @@ wideboard.App.prototype.run = function(canvasElementId) {
   //this.linemap.makeLinemap();
   this.linemap = new wideboard.Linemap(this.context, 128, 128);
   this.linemap.load('wb-app.js');
+
+  this.shelf = new wideboard.Shelf(context);
+
+  this.document = new wideboard.Document(this.shelf, this.linemap);
 
   this.docmap = new wideboard.Texture(gl, 1024, 1024, gl.RGBA, false);
 
