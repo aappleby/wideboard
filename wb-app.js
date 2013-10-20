@@ -18,6 +18,36 @@ goog.require('wideboard.Texture');
 
 
 
+var allFiles = [
+  //'warandpeace.txt',
+  'index.html',
+  'simple.glsl',
+  'text1.glsl',
+  'texture.glsl',
+  'wb-app.js',
+  'wb-attribute.js',
+  'wb-bitvec.js',
+  'wb-buffer.js',
+  'wb-camera.js',
+  'wb-context.js',
+  'wb-controls.js',
+  'wb-document.js',
+  'wb-dragtarget.js',
+  'wb-draw.js',
+  'wb-file.js',
+  'wb-grid.js',
+  'wb-librarian.js',
+  'wb-linemap.js',
+  'wb-scrap.js',
+  'wb-shader.js',
+  'wb-shelf.js',
+  'wb-texture.js',
+  'wb-uniform.js',
+  'wb-util.js'
+];
+
+
+
 /**
  * @constructor
  * @struct
@@ -350,6 +380,7 @@ wideboard.App.prototype.run = function(canvasElementId) {
 
   // Librarian
   this.librarian = new wideboard.Librarian(context);
+  this.librarian.loadFiles(allFiles);
 
   window.requestAnimationFrame(this.frameCallback);
 };

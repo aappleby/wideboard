@@ -10,7 +10,9 @@ path = require('path');
 when = require('when');
 nodefn = require('when/node/function');
 
+
 /**
+ * @param {string} filename
  * @constructor
  * @struct
  */
@@ -22,7 +24,10 @@ wideboard.FileInfo = function(filename) {
   this.stat = null;
 };
 
+
 /**
+ * @param {Object} request
+ * @param {Object} response
  * @constructor
  * @struct
  */
@@ -53,6 +58,9 @@ wideboard.Request = function(request, response) {
 };
 
 
+/**
+ * @param {string} filename
+ */
 wideboard.Request.prototype.sendNotFound = function(filename) {
   response.writeHead(404, {'Content-Type': 'text/plain'});
   response.write('404 Not Found - ' + filename);
@@ -60,6 +68,9 @@ wideboard.Request.prototype.sendNotFound = function(filename) {
 };
 
 
+/**
+ * @param {Object} error
+ */
 wideboard.Request.prototype.sendError = function(error) {
   response.writeHead(500, {'Content-Type': 'text/plain'});
   response.write(JSON.stringify(error));
@@ -67,6 +78,10 @@ wideboard.Request.prototype.sendError = function(error) {
 };
 
 
+/**
+ * @param {string} filename
+ * @param {!Array.<number>} contents
+ */
 wideboard.Request.prototype.sendFile = function(filename, contents) {
   var types = {
     '.html': 'text/html',
@@ -82,6 +97,9 @@ wideboard.Request.prototype.sendFile = function(filename, contents) {
 };
 
 
+/**
+ * @param {Object} object
+ */
 wideboard.Request.prototype.sendJson = function(object) {
   var encoded = JSON.stringify(object, true, 2);
   var headers = {};
@@ -92,6 +110,9 @@ wideboard.Request.prototype.sendJson = function(object) {
 };
 
 
+/**
+ * @param {string} text
+ */
 wideboard.Request.prototype.sendString = function(text) {
   var headers = {};
   headers['Content-Type'] = 'text/plain';
@@ -101,7 +122,11 @@ wideboard.Request.prototype.sendString = function(text) {
 };
 
 
-
+/**
+ * @param {string} filename
+ * @param {Object} error
+ * @param {Object} stats
+ */
 wideboard.Request.prototype.onStatFile = function(filename, error, stats) {
   if (error) {
     this.sendJson(error);
@@ -116,6 +141,11 @@ wideboard.Request.prototype.onStatFile = function(filename, error, stats) {
 };
 
 
+/**
+ * @param {string} dirname
+ * @param {Object} error
+ * @param {!Array.<string>} files
+ */
 wideboard.Request.prototype.onReadDirectory = function(dirname, error, files) {
   if (error) {
     this.sendJson(error);
@@ -134,6 +164,12 @@ wideboard.Request.prototype.onReadDirectory = function(dirname, error, files) {
 };
 
 
+/**
+ * @param {string} dirname
+ * @param {Object} error
+ * @param {!Array.<string>} files
+ * @param {!Array.<Object>} stats
+ */
 wideboard.Request.prototype.onStatDirectory = function(dirname, error, files, stats) {
   if (error) {
     this.sendJson(error);
@@ -154,6 +190,11 @@ wideboard.Request.prototype.onStatDirectory = function(dirname, error, files, st
 };
 
 
+/**
+ * @param {string} filename
+ * @param {Object} error
+ * @param {!Array.<number>} buffer
+ */
 wideboard.Request.prototype.onReadFile = function(filename, error, buffer) {
   if (error) {
     this.sendJson(error);
@@ -164,6 +205,8 @@ wideboard.Request.prototype.onReadFile = function(filename, error, buffer) {
 };
 
 
+/**
+ */
 wideboard.Request.prototype.dispatch = function() {
   var self = this;
   var request = this.request;
@@ -186,6 +229,10 @@ wideboard.Request.prototype.dispatch = function() {
 };
 
 
+/**
+ * @param {Object} request
+ * @param {Object} response
+ */
 function main(request, response) {
   var r = new wideboard.Request(request, response);
   r.dispatch();

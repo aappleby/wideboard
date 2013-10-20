@@ -252,3 +252,33 @@ wideboard.util.worldToScreenY = function(y, view, canvas) {
   y += Math.round(canvas.height / 2);
   return y;
 };
+
+
+/**
+ * Scans a text file (represented as a blob) for line ends & returns an array
+ * of all the line start indices in the file.
+ * @param {!Uint8Array} bytes
+ * @return {!Array.<number>} lines
+ */
+wideboard.util.findLines = function(bytes) {
+  var lines = [];
+  var cursor = 0;
+
+  // Skip byte order mark if present.
+  if (bytes[0] == 239) {
+    cursor = 3;
+  }
+
+  for (var i = cursor; i < bytes.length; i++) {
+    if (bytes[i] == 10) {
+      var lineLength = i - cursor;
+      lines.push(cursor);
+      cursor = i + 1;
+    }
+  }
+  if (cursor < bytes.length) {
+    lines.push(cursor);
+  }
+
+  return lines;
+};

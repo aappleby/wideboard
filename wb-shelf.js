@@ -51,14 +51,6 @@ wideboard.Shelf = function(context, width, height) {
 wideboard.Shelf.prototype.addDocument = function(linePos, lineLength) {
   var size = linePos.length;
 
-  /*
-  if (this.cursorX + size > this.width) {
-    this.cursorX = 0;
-    this.cursorY++;
-  }
-  var pos = this.cursorX + this.cursorY * this.width;
-  this.cursorX += size;
-  */
   var pos = this.cursorX + this.cursorY * this.width;
 
   for (var i = 0; i < size; i++) {

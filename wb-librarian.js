@@ -12,7 +12,6 @@ goog.require('wideboard.Scrap');
 goog.require('wideboard.Shelf');
 
 
-
 /**
  * @param {!wideboard.Context} context
  * @constructor
@@ -30,43 +29,21 @@ wideboard.Librarian = function(context) {
 
   /** @type {!Array.<!wideboard.Document>} */
   this.documents = [];
+};
 
-  var files = [
-    //'warandpeace.txt',
-    'index.html',
-    'simple.glsl',
-    'text1.glsl',
-    'texture.glsl',
-    'wb-app.js',
-    'wb-attribute.js',
-    'wb-bitvec.js',
-    'wb-buffer.js',
-    'wb-camera.js',
-    'wb-context.js',
-    'wb-controls.js',
-    'wb-document.js',
-    'wb-dragtarget.js',
-    'wb-draw.js',
-    'wb-file.js',
-    'wb-grid.js',
-    'wb-librarian.js',
-    'wb-linemap.js',
-    'wb-scrap.js',
-    'wb-shader.js',
-    'wb-shelf.js',
-    'wb-texture.js',
-    'wb-uniform.js',
-    'wb-util.js'
-  ];
 
+/**
+ * @param {!Array.<string>} files
+ */
+wideboard.Librarian.prototype.loadFiles = function(files) {
   for (var i = 0; i < files.length; i++) {
-    this.documents.push(new wideboard.Document(this.shelf, this.linemap));
-    this.documents[i].load(files[i]);
+    this.loadDocument(files[i]);
   }
 };
 
 
 /**
+ * @param {string} filename
  * @param {!Uint8Array} bytes
  */
 wideboard.Librarian.prototype.onDocumentLoad = function(filename, bytes) {
@@ -78,7 +55,7 @@ wideboard.Librarian.prototype.onDocumentLoad = function(filename, bytes) {
   }
 
   // Add all lines in the file to the linemap.
-  
+
   var document = new wideboard.Document();
 
   var end = bytes.length;
@@ -90,8 +67,8 @@ wideboard.Librarian.prototype.onDocumentLoad = function(filename, bytes) {
       var lineLength = i - cursor;
       var pos = this.linemap.addLine(bytes, cursor, lineLength);
 
-      this.linePos.push(pos);
-      this.lineLength.push(lineLength);
+      document.linePos.push(pos);
+      document.lineLength.push(lineLength);
       cursor = i + 1;
     }
   }
@@ -100,17 +77,19 @@ wideboard.Librarian.prototype.onDocumentLoad = function(filename, bytes) {
     var pos = this.linemap.addLine(bytes, cursor, lineLength);
 
     // Hit a \n.
-    this.linePos.push(pos);
-    this.lineLength.push(lineLength);
+    document.linePos.push(pos);
+    document.lineLength.push(lineLength);
   }
 
   this.linemap.updateTexture();
 
   // Add the document to the shelf.
-  this.shelfPos = this.shelf.addDocument(this.linePos, this.lineLength);
-  this.shelf.updateTexture();
+  document.shelfPos = this.shelf.addDocument(document.linePos, document.lineLength);
+  //this.shelf.updateTexture();
 
-  this.ready = true;
+  document.ready = true;
+
+  this.documents.push(document);
 };
 
 
