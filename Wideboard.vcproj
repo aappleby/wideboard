@@ -149,6 +149,10 @@
 			>
 		</File>
 		<File
+			RelativePath=".\wb-server.js"
+			>
+		</File>
+		<File
 			RelativePath=".\wb-shader.js"
 			>
 		</File>

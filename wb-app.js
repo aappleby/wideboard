@@ -242,7 +242,7 @@ wideboard.App.prototype.render = function() {
 
     for (var i = 0; i < this.librarian.documents.length; i++) {
       var document = this.librarian.documents[i];
-      
+
       this.uniforms['modelToWorld'].set(800 * i, 0, 1, 1);
       shader.uniforms['docSize'].set2f(120, document.linePos.length);
       shader.uniforms['docScroll'].set1f(document.shelfPos);

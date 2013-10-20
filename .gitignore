@@ -10,3 +10,5 @@ compiler.jar
 plovr.jar
 *.WW
 warandpeace.txt
+node_modules
+tools
