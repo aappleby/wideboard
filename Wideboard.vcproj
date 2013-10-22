@@ -73,6 +73,10 @@
 			>
 		</File>
 		<File
+			RelativePath=".\node-externs.js"
+			>
+		</File>
+		<File
 			RelativePath=".\simple.glsl"
 			>
 		</File>
@@ -142,6 +146,10 @@
 		</File>
 		<File
 			RelativePath=".\wb-linemap.js"
+			>
+		</File>
+		<File
+			RelativePath=".\wb-root.js"
 			>
 		</File>
 		<File

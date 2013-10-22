@@ -2,13 +2,15 @@ require('./closure-library/closure/goog/bootstrap/nodejs');
 
 goog.provide('wideboard.FileInfo');
 goog.provide('wideboard.Request');
+goog.provide('wideboard.Server');
 
-http = require('http');
-fs = require('fs');
-url = require('url');
-path = require('path');
-when = require('when');
-nodefn = require('when/node/function');
+var http = /** @type {!node.http} */ (require('http'));
+var path = /** @type {!node.path} */ (require('path'));
+var fs = /** @type {!node.fs} */ (require('fs'));
+var url = /** @type {!node.url} */ (require('url'));
+
+var when = /** @type {!node.when} */ (require('when'));
+var nodefn = /** @type {!node.nodefn} */ (require('when/node/function'));
 
 
 /**
@@ -20,22 +22,26 @@ wideboard.FileInfo = function(filename) {
   /** @type {string} */
   this.name = filename;
 
-  /** @type {Object} */
+  /** @type {node.fs.Stats} */
   this.stat = null;
 };
 
 
 /**
- * @param {Object} request
- * @param {Object} response
+ * @param {!node.http.ClientRequest} request
+ * @param {!node.http.ServerResponse} response
  * @constructor
  * @struct
  */
 wideboard.Request = function(request, response) {
-  /** @type {!Object} */
+  /**
+   * @type {!node.http.ClientRequest}
+   */
   this.request = request;
 
-  /** @type {!Object} */
+  /**
+   * @type {!node.http.ServerResponse}
+   */
   this.response = response;
 
   /** @type {!Array.<!wideboard.FileInfo>} */
@@ -47,6 +53,7 @@ wideboard.Request = function(request, response) {
   /** @type {number} */
   this.pendingStat = 0;
 
+  /** @const {!Object.<string, boolean>} */
   this.extensionFilter = {
     '.html': true,
     '.css': true,
@@ -55,6 +62,9 @@ wideboard.Request = function(request, response) {
     '.h': true,
     '.glsl': true
   };
+
+  /** @type {number} */
+  this.shouldnotwork = nodefn.call(fs.stat);
 };
 
 
@@ -62,25 +72,25 @@ wideboard.Request = function(request, response) {
  * @param {string} filename
  */
 wideboard.Request.prototype.sendNotFound = function(filename) {
-  response.writeHead(404, {'Content-Type': 'text/plain'});
-  response.write('404 Not Found - ' + filename);
-  response.end();
+  this.response.writeHead(404, {'Content-Type': 'text/plain'});
+  this.response.write('404 Not Found - ' + filename);
+  this.response.end();
 };
 
 
 /**
- * @param {Object} error
+ * @param {!Error} error
  */
 wideboard.Request.prototype.sendError = function(error) {
-  response.writeHead(500, {'Content-Type': 'text/plain'});
-  response.write(JSON.stringify(error));
-  response.end();
+  this.response.writeHead(500, {'Content-Type': 'text/plain'});
+  this.response.write(JSON.stringify(error));
+  this.response.end();
 };
 
 
 /**
  * @param {string} filename
- * @param {!Array.<number>} contents
+ * @param {!ArrayBuffer} contents
  */
 wideboard.Request.prototype.sendFile = function(filename, contents) {
   var types = {
@@ -101,7 +111,7 @@ wideboard.Request.prototype.sendFile = function(filename, contents) {
  * @param {Object} object
  */
 wideboard.Request.prototype.sendJson = function(object) {
-  var encoded = JSON.stringify(object, true, 2);
+  var encoded = JSON.stringify(object, null, 2);
   var headers = {};
   headers['Content-Type'] = 'text/plain';
   this.response.writeHead(200, headers);
@@ -124,8 +134,8 @@ wideboard.Request.prototype.sendString = function(text) {
 
 /**
  * @param {string} filename
- * @param {Object} error
- * @param {Object} stats
+ * @param {Error} error
+ * @param {node.fs.Stats} stats
  */
 wideboard.Request.prototype.onStatFile = function(filename, error, stats) {
   if (error) {
@@ -143,7 +153,7 @@ wideboard.Request.prototype.onStatFile = function(filename, error, stats) {
 
 /**
  * @param {string} dirname
- * @param {Object} error
+ * @param {Error} error
  * @param {!Array.<string>} files
  */
 wideboard.Request.prototype.onReadDirectory = function(dirname, error, files) {
@@ -152,9 +162,11 @@ wideboard.Request.prototype.onReadDirectory = function(dirname, error, files) {
     return;
   }
 
+  /** @type {!Array.<!node.when.Promise>} */
   var promises = [];
+
   for (var i = 0; i < files.length; i++) {
-    promises[i] = nodefn.call(fs.stat, path.join(dirname, files[i]));
+    promises.push(nodefn.call(fs.stat, path.join(dirname, files[i])));
   }
 
   var self = this;
@@ -166,9 +178,9 @@ wideboard.Request.prototype.onReadDirectory = function(dirname, error, files) {
 
 /**
  * @param {string} dirname
- * @param {Object} error
+ * @param {Error} error
  * @param {!Array.<string>} files
- * @param {!Array.<Object>} stats
+ * @param {Array.<!node.fs.Stats>} stats
  */
 wideboard.Request.prototype.onStatDirectory = function(dirname, error, files, stats) {
   if (error) {
@@ -192,8 +204,8 @@ wideboard.Request.prototype.onStatDirectory = function(dirname, error, files, st
 
 /**
  * @param {string} filename
- * @param {Object} error
- * @param {!Array.<number>} buffer
+ * @param {Error} error
+ * @param {!ArrayBuffer} buffer
  */
 wideboard.Request.prototype.onReadFile = function(filename, error, buffer) {
   if (error) {
@@ -213,10 +225,10 @@ wideboard.Request.prototype.dispatch = function() {
   var response = this.response;
 
   var parsed = url.parse(request.url, true);
-  var query = parsed.query;
+  var query = parsed['query'];
 
-  if (query.dir) {
-    this.sendString('You asked for dir ' + query.dir);
+  if (query['dir']) {
+    this.sendString('You asked for dir ' + query['dir']);
     return;
   }
 
@@ -230,14 +242,23 @@ wideboard.Request.prototype.dispatch = function() {
 
 
 /**
- * @param {Object} request
- * @param {Object} response
+ * @constructor
+ * @struct
  */
-function main(request, response) {
-  var r = new wideboard.Request(request, response);
-  r.dispatch();
-}
+wideboard.Server = function() {
 
-var port = 65432;
-http.createServer(main).listen(port);
-console.log('Started on port ' + port);
+  this.main = function(request, response) {
+    var r = new wideboard.Request(request, response);
+    r.dispatch();
+  };
+
+  var port = 65432;
+  http.createServer(this.main.bind(this)).listen(port);
+  goog.global.console.log('Started on port ' + port);
+};
+
+
+/**
+ * @type {!wideboard.Server}
+ */
+goog.global.wbServer = new wideboard.Server();

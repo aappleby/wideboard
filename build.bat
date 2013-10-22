@@ -4,10 +4,11 @@ gjslint --disable 0110 *.js
 
 java -jar compiler.jar ^
 --process_closure_primitives ^
---closure_entry_point wideboard.App ^
+--closure_entry_point wideboard.Root ^
 --compilation_level ADVANCED_OPTIMIZATIONS ^
 --warning_level VERBOSE ^
 --externs externs.js ^
+--externs node-externs.js ^
 --jscomp_error accessControls ^
 --jscomp_error ambiguousFunctionDecl ^
 --jscomp_error checkEventfulObjectDisposal ^
@@ -70,6 +71,8 @@ java -jar compiler.jar ^
 --js wb-document.js ^
 --js wb-librarian.js ^
 --js wb-app.js ^
+--js wb-server.js ^
+--js wb-root.js ^
 --js_output_file wideboard-compiled.js
 
 rm wideboard-compiled.js
