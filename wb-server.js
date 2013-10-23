@@ -55,12 +55,17 @@ wideboard.Request = function(request, response) {
 
   /** @const {!Object.<string, boolean>} */
   this.extensionFilter = {
+    '' : true,
     '.html': true,
     '.css': true,
     '.js': true,
     '.c': true,
     '.h': true,
     '.glsl': true
+  };
+  
+  this.blacklist = {
+    '.git': true
   };
 
   /** @type {number} */
@@ -189,8 +194,12 @@ wideboard.Request.prototype.onStatDirectory = function(dirname, error, files, st
 
   var response = [];
   for (var i = 0; i < stats.length; i++) {
+    var base = path.basename(files[i]);
+    if (this.blacklist[base]) continue;
+    
     var ext = path.extname(files[i]);
     if (!this.extensionFilter[ext]) continue;
+    
     response.push({
       name: files[i],
       dir: stats[i].isDirectory(),

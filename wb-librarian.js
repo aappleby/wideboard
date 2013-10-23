@@ -22,13 +22,15 @@ wideboard.Librarian = function(context) {
   this.context = context;
 
   /** @type {!wideboard.Linemap} */
-  this.linemap = new wideboard.Linemap(this.context, 2048, 2048);
+  this.linemap = new wideboard.Linemap(this.context, 4096, 4096);
 
   /** @type {!wideboard.Shelf} */
-  this.shelf = new wideboard.Shelf(context, 512, 512);
+  this.shelf = new wideboard.Shelf(context, 1024, 1024);
 
   /** @type {!Array.<!wideboard.Document>} */
   this.documents = [];
+  
+  this.documentsRequested = 0;
 };
 
 
@@ -36,17 +38,27 @@ wideboard.Librarian = function(context) {
  * @param {!Array.<string>} files
  */
 wideboard.Librarian.prototype.loadFiles = function(files) {
+  /*
   for (var i = 0; i < files.length; i++) {
     this.loadDocument(files[i]);
   }
+  */
+  
+  this.loadDirectory("closure-library/closure/goog");
+  //this.loadDirectory("closure-library/closure/goog");
+  //this.loadDirectory("closure-library/closure/goog");
+  //this.loadDirectory("closure-library/closure/goog");
 };
 
+var totalLines = 0;
+var totalFiles = 0;
 
 /**
  * @param {string} filename
  * @param {!Uint8Array} bytes
  */
 wideboard.Librarian.prototype.onDocumentLoad = function(filename, bytes) {
+  totalFiles++;
   var cursor = 0;
 
   // Skip byte order mark if present.
@@ -80,6 +92,8 @@ wideboard.Librarian.prototype.onDocumentLoad = function(filename, bytes) {
     document.linePos.push(pos);
     document.lineLength.push(lineLength);
   }
+  
+  totalLines += document.linePos.length;
 
   this.linemap.updateTexture();
 
@@ -94,17 +108,67 @@ wideboard.Librarian.prototype.onDocumentLoad = function(filename, bytes) {
 
 
 /**
+ * @param {string} path
+ * @param {!Array.<Object>} files
+ */
+wideboard.Librarian.prototype.onDirectoryLoad = function(path, files) {
+  console.log(path);
+  console.log(files);
+  
+  var toodeep = (path.split('/').length > 3);
+  
+  if (path.length && path[path.length-1] == '/') {
+    path = path.substr(0, path.length - 1);
+  }
+  
+  for (var i = 0; i < files.length; i++) {
+    var file = files[i];
+    
+    var newpath = path.length ? path + "/" + file.name : file.name;
+    
+    console.log(newpath);
+
+    if (file.dir) {
+      if (!toodeep) {
+        this.loadDirectory(newpath);
+      }
+    } else {
+      //if (this.documentsRequested < 500) {
+        this.loadDocument(newpath);
+        this.documentsRequested++;
+      //}
+    }
+  }
+};
+ 
+
+/**
  * @param {string} filename
  */
 wideboard.Librarian.prototype.loadDocument = function(filename) {
-  var xhr1 = new XMLHttpRequest();
-  xhr1.open('GET', filename);
-  xhr1.responseType = 'arraybuffer';
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', filename);
+  xhr.responseType = 'arraybuffer';
   var self = this;
-  xhr1.onload = function() {
-    var response = /** @type {!ArrayBuffer} */(xhr1.response);
+  xhr.onload = function() {
+    var response = /** @type {!ArrayBuffer} */(xhr.response);
     var bytes = new Uint8Array(response);
     self.onDocumentLoad(filename, bytes);
   };
-  xhr1.send();
+  xhr.send();
+};
+
+
+/**
+ * @param {string} path
+ */
+wideboard.Librarian.prototype.loadDirectory = function(path) {
+  var xhr = new XMLHttpRequest();
+  xhr.open('GET', path);
+  var self = this;
+  xhr.onload = function() {
+    var response = JSON.parse(xhr.response);
+    self.onDirectoryLoad(path, response);
+  };
+  xhr.send();
 };

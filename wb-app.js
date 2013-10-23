@@ -244,6 +244,7 @@ wideboard.App.prototype.render = function() {
     var shader = this.textShader;
 
     gl.useProgram(shader.glProgram);
+    gl.enable(gl.BLEND);
 
     shader.uniforms['docmap'].set1i(0);
     shader.uniforms['docmapSize'].set2f(this.librarian.shelf.width, this.librarian.shelf.height);
@@ -270,14 +271,37 @@ wideboard.App.prototype.render = function() {
 
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer.glBuffer);
 
+    var cursorX = 0;
+    var cursorY = 0;
+
+    shader.uniforms['cursor'].set(Math.floor(goog.now() / 30) % 100, Math.floor(goog.now() / 300) % 100);
+    shader.uniforms['background'].set(0, 0, 0.2, 1);
+    shader.uniforms['foreground'].set(0.9, 0.9, 0.9, 1);
+
+    var s = Math.sin(goog.now() / 100) * 0.03;
+    shader.uniforms['lineHighlight'].set(0.2 + s, 0.2 + s, 0.3 + s, 1.0);
+    
     for (var i = 0; i < this.librarian.documents.length; i++) {
       var document = this.librarian.documents[i];
+      
+      var s2 = 1.0;
+      //s2 = Math.pow(2.0, -(i % 5));
+      //s2 += Math.sin(goog.now() / 1000) * 0.2;
 
-      this.uniforms['modelToWorld'].set(800 * i, 0, 1, 1);
+      this.uniforms['modelToWorld'].set(cursorX, cursorY, s2, s2);
+      //shader.uniforms['background'].set((i % 255) / 255.0, 0.0, 0.2, 1.0);
+      //shader.uniforms['foreground'].set(1.0, (i % 173) / 173, 0.2, 1.0);
+      
       shader.uniforms['docSize'].set2f(120, document.linePos.length);
       shader.uniforms['docScroll'].set1f(document.shelfPos);
       shader.setUniforms();
       gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, 0);
+      
+      cursorY += document.linePos.length * 14 + 300;
+      if (cursorY > 60000) {
+        cursorY = 0;
+        cursorX += 1000;
+      }
     }
   }
 };

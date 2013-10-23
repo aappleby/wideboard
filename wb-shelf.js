@@ -40,6 +40,12 @@ wideboard.Shelf = function(context, width, height) {
 
   /** @type {number} */
   this.cursorY = 0;
+  
+  /** @type {number} */
+  this.cleanCursorX = 0;
+  
+  /** @type {number} */
+  this.cleanCursorY = 0;
 };
 
 
@@ -71,11 +77,26 @@ wideboard.Shelf.prototype.addDocument = function(linePos, lineLength) {
  * GPU, but for now it's easier to flush the whole thing.
  */
 wideboard.Shelf.prototype.updateTexture = function() {
+  if ((this.cursorX == this.cleanCursorX) &&
+      (this.cursorY == this.cleanCursorY)) {
+    return;
+  }
+  
+  var linecount = (this.cursorY - this.cleanCursorY + 1);
+  
+  var byteOffset = this.cleanCursorY * this.width * 4;
+  var byteSize = linecount * this.width * 4;
+
   var gl = this.context.getGl();
   gl.bindTexture(gl.TEXTURE_2D, this.texture.glTexture);
-  var blob = new Uint8Array(this.buffer.buffer);
-  gl.texImage2D(gl.TEXTURE_2D, 0, this.texture.format,
-                this.width, this.height, 0,
-                this.texture.format, gl.UNSIGNED_BYTE, blob);
+
+  var blob = new Uint8Array(this.buffer.buffer, byteOffset, byteSize);
+  gl.texSubImage2D(gl.TEXTURE_2D, 0,
+                   0, this.cleanCursorY,
+                   this.width, linecount,
+                   this.texture.format, gl.UNSIGNED_BYTE, blob);
+                
   this.texture.ready = true;
+  this.cleanCursorX = this.cursorX;
+  this.cleanCursorY = this.cursorY;
 };

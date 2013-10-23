@@ -16,6 +16,11 @@ uniform vec2 glyphmapSize;
 uniform vec2 glyphSize;
 uniform vec2 cellSize;
 
+uniform vec4 background;
+uniform vec4 foreground;
+uniform vec4 lineHighlight;
+uniform vec2 cursor;
+
 attribute vec2 vpos;
 attribute vec2 vtex;
 
@@ -53,6 +58,17 @@ void main(void) {
   vec2 docPos = floor(cellPos);
   cellPos -= docPos;
 
+  vec4 back = background;
+  if (docPos.y == cursor.y) {
+    back = lineHighlight;
+    if (docPos.x == cursor.x) {
+      if (cellPos.x <= 0.125) {
+        back = vec4(0.8, 0.8, 0.8, 0.4);
+      }
+    }
+  }
+
+
   docPos.y += docScroll;
 
   vec2 docmapPos = vec2(mod(docPos.y, docmapSize.x), floor(docPos.y / docmapSize.x));
@@ -63,7 +79,7 @@ void main(void) {
 
   // Return the background color if the doc x coordinate is past the line end.
   if (docPos.x >= lineLength) {
-    gl_FragColor = vec4(0.0, 0.0, 0.2, 1.0);
+    gl_FragColor = back;
     return;
   }
 
@@ -96,7 +112,7 @@ void main(void) {
 
   result = sqrt(result);//smoothstep(0.0, 0.6, result);
 
-  gl_FragColor = vec4(result, result, result, 1.0);
+  gl_FragColor = mix(back, foreground, result);
 }
 
 #endif
