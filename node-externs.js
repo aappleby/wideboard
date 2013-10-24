@@ -102,6 +102,12 @@ node.path = function() {};
  * @param {string} p
  * @return {string}
  */
+node.path.prototype.basename = function(p) {};
+
+/**
+ * @param {string} p
+ * @return {string}
+ */
 node.path.prototype.extname = function(p) {};
 
 /**

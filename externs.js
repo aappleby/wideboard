@@ -1,7 +1,7 @@
 var console = {};
 
-/** @param {string} text */
-console.log = function(text) {};
+/** @param {*} val */
+console.log = function(val) {};
 
 var performance = {};
 

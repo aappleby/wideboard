@@ -63,7 +63,7 @@ wideboard.Request = function(request, response) {
     '.h': true,
     '.glsl': true
   };
-  
+
   this.blacklist = {
     '.git': true
   };
@@ -196,10 +196,10 @@ wideboard.Request.prototype.onStatDirectory = function(dirname, error, files, st
   for (var i = 0; i < stats.length; i++) {
     var base = path.basename(files[i]);
     if (this.blacklist[base]) continue;
-    
+
     var ext = path.extname(files[i]);
     if (!this.extensionFilter[ext]) continue;
-    
+
     response.push({
       name: files[i],
       dir: stats[i].isDirectory(),

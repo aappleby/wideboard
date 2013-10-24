@@ -65,8 +65,8 @@ wideboard.Camera.prototype.onMouseWheel = function(x, y, delta) {
   var step = 1.0;
   oldZoom = Math.round(oldZoom / step) * step;
   var newZoom = oldZoom + delta * step;
-  if (newZoom < -8) newZoom = -8;
-  if (newZoom > 8) newZoom = 8;
+  if (newZoom < -10) newZoom = -10;
+  if (newZoom > 2) newZoom = 2;
   var newDelta = newZoom - oldZoom;
 
   // Convert from screen space to graph space.

@@ -37,7 +37,7 @@ wideboard.Linemap = function(context, width, height) {
 
   /** @type {number} */
   this.cursorY = 0;
-  
+
   /** @type {number} */
   this.cleanCursorX = 0;
 
@@ -105,9 +105,9 @@ wideboard.Linemap.prototype.updateTexture = function() {
       (this.cursorY == this.cleanCursorY)) {
     return;
   }
-  
+
   var linecount = (this.cursorY - this.cleanCursorY + 1);
-  
+
   var byteOffset = this.cleanCursorY * this.width;
   var byteSize = linecount * this.width;
 

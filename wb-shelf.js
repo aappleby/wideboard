@@ -40,12 +40,15 @@ wideboard.Shelf = function(context, width, height) {
 
   /** @type {number} */
   this.cursorY = 0;
-  
+
   /** @type {number} */
   this.cleanCursorX = 0;
-  
+
   /** @type {number} */
   this.cleanCursorY = 0;
+
+  /** @type {!wideboard.Linemap} */
+  this.linemap = new wideboard.Linemap(this.context, 4096, 4096);
 };
 
 
@@ -81,9 +84,9 @@ wideboard.Shelf.prototype.updateTexture = function() {
       (this.cursorY == this.cleanCursorY)) {
     return;
   }
-  
+
   var linecount = (this.cursorY - this.cleanCursorY + 1);
-  
+
   var byteOffset = this.cleanCursorY * this.width * 4;
   var byteSize = linecount * this.width * 4;
 
@@ -95,7 +98,7 @@ wideboard.Shelf.prototype.updateTexture = function() {
                    0, this.cleanCursorY,
                    this.width, linecount,
                    this.texture.format, gl.UNSIGNED_BYTE, blob);
-                
+
   this.texture.ready = true;
   this.cleanCursorX = this.cursorX;
   this.cleanCursorY = this.cursorY;

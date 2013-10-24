@@ -227,7 +227,7 @@ wideboard.App.prototype.render = function() {
 
     gl.activeTexture(gl.TEXTURE0);
 
-    gl.bindTexture(gl.TEXTURE_2D, this.librarian.linemap.texture.glTexture);
+    gl.bindTexture(gl.TEXTURE_2D, this.librarian.shelf.linemap.texture.glTexture);
     this.uniforms['modelToWorld'].set(0, -48, 32, 32);
     shader.setUniforms();
     gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, 0);
@@ -252,9 +252,9 @@ wideboard.App.prototype.render = function() {
     gl.bindTexture(gl.TEXTURE_2D, this.librarian.shelf.texture.glTexture);
 
     shader.uniforms['linemap'].set1i(1);
-    shader.uniforms['linemapSize'].set2f(this.librarian.linemap.width, this.librarian.linemap.height);
+    shader.uniforms['linemapSize'].set2f(this.librarian.shelf.linemap.width, this.librarian.shelf.linemap.height);
     gl.activeTexture(gl.TEXTURE1);
-    gl.bindTexture(gl.TEXTURE_2D, this.librarian.linemap.texture.glTexture);
+    gl.bindTexture(gl.TEXTURE_2D, this.librarian.shelf.linemap.texture.glTexture);
 
     shader.uniforms['glyphmap'].set1i(2);
     shader.uniforms['glyphmapSize'].set2f(this.glyphmap.width, this.glyphmap.height);
@@ -280,10 +280,10 @@ wideboard.App.prototype.render = function() {
 
     var s = Math.sin(goog.now() / 100) * 0.03;
     shader.uniforms['lineHighlight'].set(0.2 + s, 0.2 + s, 0.3 + s, 1.0);
-    
+
     for (var i = 0; i < this.librarian.documents.length; i++) {
       var document = this.librarian.documents[i];
-      
+
       var s2 = 1.0;
       //s2 = Math.pow(2.0, -(i % 5));
       //s2 += Math.sin(goog.now() / 1000) * 0.2;
@@ -291,16 +291,16 @@ wideboard.App.prototype.render = function() {
       this.uniforms['modelToWorld'].set(cursorX, cursorY, s2, s2);
       //shader.uniforms['background'].set((i % 255) / 255.0, 0.0, 0.2, 1.0);
       //shader.uniforms['foreground'].set(1.0, (i % 173) / 173, 0.2, 1.0);
-      
-      shader.uniforms['docSize'].set2f(120, document.linePos.length);
+
+      shader.uniforms['docSize'].set2f(128, document.linePos.length);
       shader.uniforms['docScroll'].set1f(document.shelfPos);
       shader.setUniforms();
       gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, 0);
-      
+
       cursorY += document.linePos.length * 14 + 300;
       if (cursorY > 60000) {
         cursorY = 0;
-        cursorX += 1000;
+        cursorX += 1024;
       }
     }
   }

@@ -21,15 +21,12 @@ wideboard.Librarian = function(context) {
   /** @type {!wideboard.Context} */
   this.context = context;
 
-  /** @type {!wideboard.Linemap} */
-  this.linemap = new wideboard.Linemap(this.context, 4096, 4096);
-
   /** @type {!wideboard.Shelf} */
   this.shelf = new wideboard.Shelf(context, 1024, 1024);
 
   /** @type {!Array.<!wideboard.Document>} */
   this.documents = [];
-  
+
   this.documentsRequested = 0;
 };
 
@@ -43,8 +40,9 @@ wideboard.Librarian.prototype.loadFiles = function(files) {
     this.loadDocument(files[i]);
   }
   */
-  
-  this.loadDirectory("closure-library/closure/goog");
+
+  this.loadDirectory('closure-library/closure/goog');
+  this.loadDocument('warandpeace.txt');
   //this.loadDirectory("closure-library/closure/goog");
   //this.loadDirectory("closure-library/closure/goog");
   //this.loadDirectory("closure-library/closure/goog");
@@ -77,7 +75,7 @@ wideboard.Librarian.prototype.onDocumentLoad = function(filename, bytes) {
 
     if (bytes[i] == 10) {
       var lineLength = i - cursor;
-      var pos = this.linemap.addLine(bytes, cursor, lineLength);
+      var pos = this.shelf.linemap.addLine(bytes, cursor, lineLength);
 
       document.linePos.push(pos);
       document.lineLength.push(lineLength);
@@ -86,16 +84,16 @@ wideboard.Librarian.prototype.onDocumentLoad = function(filename, bytes) {
   }
   if (cursor < bytes.length) {
     var lineLength = i - cursor;
-    var pos = this.linemap.addLine(bytes, cursor, lineLength);
+    var pos = this.shelf.linemap.addLine(bytes, cursor, lineLength);
 
     // Hit a \n.
     document.linePos.push(pos);
     document.lineLength.push(lineLength);
   }
-  
+
   totalLines += document.linePos.length;
 
-  this.linemap.updateTexture();
+  this.shelf.linemap.updateTexture();
 
   // Add the document to the shelf.
   document.shelfPos = this.shelf.addDocument(document.linePos, document.lineLength);
@@ -114,18 +112,18 @@ wideboard.Librarian.prototype.onDocumentLoad = function(filename, bytes) {
 wideboard.Librarian.prototype.onDirectoryLoad = function(path, files) {
   console.log(path);
   console.log(files);
-  
+
   var toodeep = (path.split('/').length > 3);
-  
-  if (path.length && path[path.length-1] == '/') {
+
+  if (path.length && path[path.length - 1] == '/') {
     path = path.substr(0, path.length - 1);
   }
-  
+
   for (var i = 0; i < files.length; i++) {
     var file = files[i];
-    
-    var newpath = path.length ? path + "/" + file.name : file.name;
-    
+
+    var newpath = path.length ? path + '/' + file.name : file.name;
+
     console.log(newpath);
 
     if (file.dir) {
@@ -140,7 +138,7 @@ wideboard.Librarian.prototype.onDirectoryLoad = function(path, files) {
     }
   }
 };
- 
+
 
 /**
  * @param {string} filename
@@ -167,8 +165,8 @@ wideboard.Librarian.prototype.loadDirectory = function(path) {
   xhr.open('GET', path);
   var self = this;
   xhr.onload = function() {
-    var response = JSON.parse(xhr.response);
-    self.onDirectoryLoad(path, response);
+    var response = JSON.parse(/** @type {string} */(xhr.response));
+    self.onDirectoryLoad(path, /** @type {!Array.<!Object>} */(response));
   };
   xhr.send();
 };
