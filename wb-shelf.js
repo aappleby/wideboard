@@ -51,7 +51,7 @@ wideboard.Shelf = function(context, width, height) {
   /** @type {number} */
   this.cleanCursorY = 0;
 
-  /** @type {number */
+  /** @type {number} */
   this.screenCursorX = 0;
 
   /** @type {number} */
