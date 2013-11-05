@@ -12,6 +12,11 @@ goog.require('wideboard.Scrap');
 goog.require('wideboard.Shelf');
 
 
+
+var totalLines = 0;
+var totalFiles = 0;
+
+
 /**
  * @param {!wideboard.Context} context
  * @constructor
@@ -21,11 +26,10 @@ wideboard.Librarian = function(context) {
   /** @type {!wideboard.Context} */
   this.context = context;
 
-  /** @type {!wideboard.Shelf} */
-  this.shelf = new wideboard.Shelf(context, 1024, 1024);
-
-  /** @type {!Array.<!wideboard.Document>} */
-  this.documents = [];
+  /** @type {!Array.<!wideboard.Shelf>} */
+  this.shelves = [];
+  this.shelves.push(new wideboard.Shelf(context, 1024, 1024));
+  this.shelves.push(new wideboard.Shelf(context, 1024, 1024));
 
   this.documentsRequested = 0;
 };
@@ -33,29 +37,20 @@ wideboard.Librarian = function(context) {
 
 /**
  * @param {!Array.<string>} files
+ * @param {number} shelfIndex
  */
-wideboard.Librarian.prototype.loadFiles = function(files) {
-  /*
+wideboard.Librarian.prototype.loadFiles = function(files, shelfIndex) {
   for (var i = 0; i < files.length; i++) {
-    this.loadDocument(files[i]);
+    this.loadDocument(files[i], shelfIndex);
   }
-  */
-
-  this.loadDirectory('closure-library/closure/goog');
-  this.loadDocument('warandpeace.txt');
-  //this.loadDirectory("closure-library/closure/goog");
-  //this.loadDirectory("closure-library/closure/goog");
-  //this.loadDirectory("closure-library/closure/goog");
 };
-
-var totalLines = 0;
-var totalFiles = 0;
 
 /**
  * @param {string} filename
  * @param {!Uint8Array} bytes
+ * @param {number} shelfIndex
  */
-wideboard.Librarian.prototype.onDocumentLoad = function(filename, bytes) {
+wideboard.Librarian.prototype.onDocumentLoad = function(filename, bytes, shelfIndex) {
   totalFiles++;
   var cursor = 0;
 
@@ -66,52 +61,42 @@ wideboard.Librarian.prototype.onDocumentLoad = function(filename, bytes) {
 
   // Add all lines in the file to the linemap.
 
-  var document = new wideboard.Document();
-
   var end = bytes.length;
-  var lineStart = cursor;
+
+  var lineStarts = [];
+  var lineLengths = [];
 
   for (var i = cursor; i < bytes.length; i++) {
 
     if (bytes[i] == 10) {
       var lineLength = i - cursor;
-      var pos = this.shelf.linemap.addLine(bytes, cursor, lineLength);
-
-      document.linePos.push(pos);
-      document.lineLength.push(lineLength);
+      lineStarts.push(cursor);
+      lineLengths.push(lineLength);
       cursor = i + 1;
     }
   }
   if (cursor < bytes.length) {
     var lineLength = i - cursor;
-    var pos = this.shelf.linemap.addLine(bytes, cursor, lineLength);
-
-    // Hit a \n.
-    document.linePos.push(pos);
-    document.lineLength.push(lineLength);
+    lineStarts.push(cursor);
+    lineLengths.push(lineLength);
   }
 
-  totalLines += document.linePos.length;
+  totalLines += lineStarts.length;
 
-  this.shelf.linemap.updateTexture();
-
-  // Add the document to the shelf.
-  document.shelfPos = this.shelf.addDocument(document.linePos, document.lineLength);
-  //this.shelf.updateTexture();
-
-  document.ready = true;
-
-  this.documents.push(document);
+  // We now have the text blob, the list of line starts, and the list of line lengths.
+  // Create a new document and add all the lines we found to it.
+  this.shelves[shelfIndex].addDocument2(bytes, lineStarts, lineLengths);
 };
 
 
 /**
  * @param {string} path
  * @param {!Array.<Object>} files
+ * @param {number} shelfIndex
  */
-wideboard.Librarian.prototype.onDirectoryLoad = function(path, files) {
-  console.log(path);
-  console.log(files);
+wideboard.Librarian.prototype.onDirectoryLoad = function(path, files, shelfIndex) {
+  //console.log(path);
+  //console.log(files);
 
   var toodeep = (path.split('/').length > 3);
 
@@ -124,15 +109,15 @@ wideboard.Librarian.prototype.onDirectoryLoad = function(path, files) {
 
     var newpath = path.length ? path + '/' + file.name : file.name;
 
-    console.log(newpath);
+    //console.log(newpath);
 
     if (file.dir) {
       if (!toodeep) {
-        this.loadDirectory(newpath);
+        this.loadDirectory(newpath, shelfIndex);
       }
     } else {
       //if (this.documentsRequested < 500) {
-        this.loadDocument(newpath);
+        this.loadDocument(newpath, shelfIndex);
         this.documentsRequested++;
       //}
     }
@@ -142,8 +127,9 @@ wideboard.Librarian.prototype.onDirectoryLoad = function(path, files) {
 
 /**
  * @param {string} filename
+ * @param {number} shelfIndex
  */
-wideboard.Librarian.prototype.loadDocument = function(filename) {
+wideboard.Librarian.prototype.loadDocument = function(filename, shelfIndex) {
   var xhr = new XMLHttpRequest();
   xhr.open('GET', filename);
   xhr.responseType = 'arraybuffer';
@@ -151,7 +137,7 @@ wideboard.Librarian.prototype.loadDocument = function(filename) {
   xhr.onload = function() {
     var response = /** @type {!ArrayBuffer} */(xhr.response);
     var bytes = new Uint8Array(response);
-    self.onDocumentLoad(filename, bytes);
+    self.onDocumentLoad(filename, bytes, shelfIndex);
   };
   xhr.send();
 };
@@ -159,14 +145,15 @@ wideboard.Librarian.prototype.loadDocument = function(filename) {
 
 /**
  * @param {string} path
+ * @param {number} shelfIndex
  */
-wideboard.Librarian.prototype.loadDirectory = function(path) {
+wideboard.Librarian.prototype.loadDirectory = function(path, shelfIndex) {
   var xhr = new XMLHttpRequest();
   xhr.open('GET', path);
   var self = this;
   xhr.onload = function() {
     var response = JSON.parse(/** @type {string} */(xhr.response));
-    self.onDirectoryLoad(path, /** @type {!Array.<!Object>} */(response));
+    self.onDirectoryLoad(path, /** @type {!Array.<!Object>} */(response), shelfIndex);
   };
   xhr.send();
 };

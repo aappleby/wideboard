@@ -91,7 +91,7 @@ wideboard.Shader.prototype.init = function() {
     if (tokens[0] == 'uniform') {
       var uniformType = tokens[1];
       var uniformName = tokens[2];
-      console.log('Uniform ' + uniformType + ' ' + uniformName + ' ' + glStringToType(gl, uniformType));
+      //console.log('Uniform ' + uniformType + ' ' + uniformName + ' ' + glStringToType(gl, uniformType));
 
       var globalUniform = this.globalUniforms[uniformName];
       var uniform = new wideboard.Uniform(gl, uniformName, glStringToType(gl, uniformType), null, globalUniform);
@@ -102,7 +102,7 @@ wideboard.Shader.prototype.init = function() {
     if (tokens[0] == 'attribute') {
       var attributeType = tokens[1];
       var attributeName = tokens[2];
-      console.log('Attribute ' + attributeType + ' ' + attributeName + ' ' + glStringToType(gl, attributeType));
+      //console.log('Attribute ' + attributeType + ' ' + attributeName + ' ' + glStringToType(gl, attributeType));
 
       var attribute = new wideboard.Attribute(gl, attributeName, glStringToType(gl, attributeType));
       this.attributes[attributeName] = attribute;
@@ -142,26 +142,26 @@ wideboard.Shader.prototype.init = function() {
 
   gl.useProgram(this.glProgram);
 
-  goog.global.console.log('Attributes:');
+  //goog.global.console.log('Attributes:');
   var attribCount = /** @type {number} */(gl.getProgramParameter(this.glProgram, gl.ACTIVE_ATTRIBUTES));
   for (var i = 0; i < attribCount; i++) {
     var attribInfo = gl.getActiveAttrib(this.glProgram, i);
     var location = gl.getAttribLocation(this.glProgram, attribInfo.name);
     if (goog.isDefAndNotNull(location)) {
-      goog.global.console.log(attribInfo);
+      //goog.global.console.log(attribInfo);
       var attribute = this.attributes[attribInfo.name];
       goog.asserts.assert(attribute);
       attribute.location = location;
     }
   }
 
-  goog.global.console.log('Uniforms:');
+  //goog.global.console.log('Uniforms:');
   var uniformCount = /** @type {number} */(gl.getProgramParameter(this.glProgram, gl.ACTIVE_UNIFORMS));
   for (var i = 0; i < uniformCount; i++) {
     var uniformInfo = gl.getActiveUniform(this.glProgram, i);
     var location = gl.getUniformLocation(this.glProgram, uniformInfo.name);
     if (goog.isDefAndNotNull(location)) {
-      goog.global.console.log(uniformInfo);
+      //goog.global.console.log(uniformInfo);
       var uniform = this.uniforms[uniformInfo.name];
       goog.asserts.assert(uniform);
       uniform.location = location;

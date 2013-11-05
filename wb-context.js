@@ -66,9 +66,31 @@ wideboard.Context.prototype.init = function() {
     return;
   }
 
-  this.instanceExtension = this.gl_.getExtension('ANGLE_instanced_arrays');
+  this.installExtension('ANGLE_instanced_arrays');
 };
 
+
+/**
+ * @param {string} extensionName
+ */
+wideboard.Context.prototype.installExtension = function(extensionName) {
+  var extension = this.gl_.getExtension(extensionName);
+
+  if (extension) {
+    for (var name in extension) {
+      var val = extension[name];
+      if (val && typeof(val) == 'function') {
+        this.gl_[name] = goog.bind(val, extension);
+        console.log(name);
+      } else {
+        this.gl_[name] = val;
+      }
+    }
+    console.log('Extension ' + extensionName + ' installed');
+  } else {
+    console.log('Extension ' + extensionName + ' not found');
+  }
+};
 
 /**
  */

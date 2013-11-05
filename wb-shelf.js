@@ -6,6 +6,7 @@
 goog.provide('wideboard.Shelf');
 
 goog.require('goog.webgl');
+goog.require('wideboard.Buffer');
 goog.require('wideboard.Texture');
 
 
@@ -18,6 +19,9 @@ goog.require('wideboard.Texture');
  * @struct
  */
 wideboard.Shelf = function(context, width, height) {
+  /** @type {!Array.<!wideboard.Document>} */
+  this.documents = [];
+
   /** @type {!wideboard.Context} */
   this.context = context;
 
@@ -47,8 +51,28 @@ wideboard.Shelf = function(context, width, height) {
   /** @type {number} */
   this.cleanCursorY = 0;
 
+  /** @type {number */
+  this.screenCursorX = 0;
+
+  /** @type {number} */
+  this.screenCursorY = 0;
+
   /** @type {!wideboard.Linemap} */
   this.linemap = new wideboard.Linemap(this.context, 4096, 4096);
+
+  /**
+   * Document position buffer, can hold 65k documents.
+   * @type {!wideboard.Buffer}
+   */
+  this.docPosBuffer = new wideboard.Buffer(context.getGl(), 'iDocPos', context.getGl().DYNAMIC_DRAW);
+  this.docPosBuffer.initDynamic(4, 65536);
+
+  /**
+   * Document position buffer, can hold 65k documents.
+   * @type {!wideboard.Buffer}
+   */
+  this.docColorBuffer = new wideboard.Buffer(context.getGl(), 'iDocColor', context.getGl().DYNAMIC_DRAW);
+  this.docColorBuffer.initDynamic(4, 65536);
 };
 
 
@@ -69,9 +93,58 @@ wideboard.Shelf.prototype.addDocument = function(linePos, lineLength) {
   this.cursorX = (pos + size) % this.width;
   this.cursorY = (pos + size - this.cursorX) / this.width;
 
-  this.updateTexture();
-
   return pos;
+};
+
+
+/**
+ * @param {!Uint8Array} bytes
+ * @param {!Array.<number>} lineStarts
+ * @param {!Array.<number>} lineLengths
+ */
+wideboard.Shelf.prototype.addDocument2 = function(bytes, lineStarts, lineLengths) {
+
+  var document = new wideboard.Document();
+  document.shelfIndex = this.documents.length;
+
+  var lineCount = lineStarts.length;
+
+  for (var i = 0; i < lineCount; i++) {
+      var pos = this.linemap.addLine(bytes, lineStarts[i], lineLengths[i]);
+      document.linePos.push(pos);
+      document.lineLength.push(lineLengths[i]);
+  }
+
+  // Add the document to the shelf.
+  document.shelfPos = this.addDocument(document.linePos, document.lineLength);
+
+  document.ready = true;
+
+  this.documents.push(document);
+
+  document.screenX = this.screenCursorX;
+  document.screenY = this.screenCursorY;
+
+  this.docPosBuffer.data[document.shelfIndex * 4 + 0] = document.screenX;
+  this.docPosBuffer.data[document.shelfIndex * 4 + 1] = document.screenY;
+  this.docPosBuffer.data[document.shelfIndex * 4 + 2] = lineCount;
+  this.docPosBuffer.data[document.shelfIndex * 4 + 3] = document.shelfPos;
+
+  this.docColorBuffer.data[document.shelfIndex * 4 + 0] = (document.shelfIndex * 0.01) % 0.2;
+  this.docColorBuffer.data[document.shelfIndex * 4 + 1] = (document.shelfIndex * 0.007) % 0.2;
+  this.docColorBuffer.data[document.shelfIndex * 4 + 2] = 0.2;
+  this.docColorBuffer.data[document.shelfIndex * 4 + 3] = 1.0;
+
+  this.screenCursorY += lineCount * 14 + 300;
+  if (this.screenCursorY > 60000) {
+    this.screenCursorY = 0;
+    this.screenCursorX += 1024;
+  }
+
+  this.updateTexture();
+  this.linemap.updateTexture();
+  this.docPosBuffer.uploadDirty(document.shelfIndex, document.shelfIndex + 1);
+  this.docColorBuffer.uploadDirty(document.shelfIndex, document.shelfIndex + 1);
 };
 
 

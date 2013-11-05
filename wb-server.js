@@ -242,7 +242,7 @@ wideboard.Request.prototype.dispatch = function() {
   }
 
   var uri = parsed.pathname;
-  console.log('=== ' + uri);
+  //console.log('=== ' + uri);
   //if (uri == '/') uri += "index.html";
   var filename = path.join(process.cwd(), uri);
 

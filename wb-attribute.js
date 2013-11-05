@@ -69,12 +69,16 @@ wideboard.Attribute.prototype.set3f = function(buffer, stride, offset) {
  * @param {!WebGLBuffer} buffer
  * @param {number} stride
  * @param {number} offset
+ * @param {boolean} instanced
  */
-wideboard.Attribute.prototype.set4f = function(buffer, stride, offset) {
+wideboard.Attribute.prototype.set4f = function(buffer, stride, offset, instanced) {
   if (this.location >= 0) {
     var gl = this.gl;
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
     gl.enableVertexAttribArray(this.location);
     gl.vertexAttribPointer(this.location, 4, gl.FLOAT, false, stride, offset);
+    if (instanced) {
+      gl.vertexAttribDivisorANGLE(this.location, 1);
+    }
   }
 };

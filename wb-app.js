@@ -18,36 +18,6 @@ goog.require('wideboard.Texture');
 
 
 
-var allFiles = [
-  //'warandpeace.txt',
-  'index.html',
-  'simple.glsl',
-  'text1.glsl',
-  'texture.glsl',
-  'wb-app.js',
-  'wb-attribute.js',
-  'wb-bitvec.js',
-  'wb-buffer.js',
-  'wb-camera.js',
-  'wb-context.js',
-  'wb-controls.js',
-  'wb-document.js',
-  'wb-dragtarget.js',
-  'wb-draw.js',
-  'wb-file.js',
-  'wb-grid.js',
-  'wb-librarian.js',
-  'wb-linemap.js',
-  'wb-scrap.js',
-  'wb-shader.js',
-  'wb-shelf.js',
-  'wb-texture.js',
-  'wb-uniform.js',
-  'wb-util.js'
-];
-
-
-
 /**
  * @constructor
  * @struct
@@ -193,26 +163,7 @@ wideboard.App.prototype.render = function() {
   this.debugDraw.draw(this.simpleShader);
   gl.useProgram(null);
 
-  /*
-  if (this.posBuffer && this.colBuffer && this.indexBuffer) {
-    this.uniforms['modelToWorld'].set(-50, 50, 32, 32);
-
-    var shader = this.simpleShader;
-    var uniforms = shader.uniforms;
-    var attributes = shader.attributes;
-
-    gl.useProgram(shader.glProgram);
-    shader.setUniforms();
-
-    attributes['vpos'].set2f(this.posBuffer.glBuffer, 0, 0);
-    attributes['vcol'].set4f(this.colBuffer.glBuffer, 0, 0);
-
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer.glBuffer);
-
-    gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, 0);
-  }
-  */
-
+  // Draw textured boxes for shelf
   if (this.posBuffer && this.texBuffer && this.indexBuffer) {
 
     var shader = this.texShader;
@@ -227,19 +178,27 @@ wideboard.App.prototype.render = function() {
 
     gl.activeTexture(gl.TEXTURE0);
 
-    gl.bindTexture(gl.TEXTURE_2D, this.librarian.shelf.linemap.texture.glTexture);
-    this.uniforms['modelToWorld'].set(0, -48, 32, 32);
+    var shelf = this.librarian.shelves[0];
+    var linemap = shelf.linemap;
+
+    gl.bindTexture(gl.TEXTURE_2D, linemap.texture.glTexture);
+    this.uniforms['modelToWorld'].set(0,
+                                      -linemap.height - 100,
+                                      linemap.width,
+                                      linemap.height);
     shader.setUniforms();
     gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, 0);
 
     gl.disable(gl.BLEND);
-    gl.bindTexture(gl.TEXTURE_2D, this.librarian.shelf.texture.glTexture);
-    this.uniforms['modelToWorld'].set(48, -48, 32, 32);
+    gl.bindTexture(gl.TEXTURE_2D, shelf.texture.glTexture);
+    this.uniforms['modelToWorld'].set(linemap.width, -linemap.height - 100, shelf.width, shelf.height);
     shader.setUniforms();
     gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, 0);
   }
 
   if (this.posBuffer && this.texBuffer && this.indexBuffer) {
+
+    var shelf = this.librarian.shelves[0];
 
     var shader = this.textShader;
 
@@ -247,14 +206,14 @@ wideboard.App.prototype.render = function() {
     gl.enable(gl.BLEND);
 
     shader.uniforms['docmap'].set1i(0);
-    shader.uniforms['docmapSize'].set2f(this.librarian.shelf.width, this.librarian.shelf.height);
+    shader.uniforms['docmapSize'].set2f(shelf.width, shelf.height);
     gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, this.librarian.shelf.texture.glTexture);
+    gl.bindTexture(gl.TEXTURE_2D, shelf.texture.glTexture);
 
     shader.uniforms['linemap'].set1i(1);
-    shader.uniforms['linemapSize'].set2f(this.librarian.shelf.linemap.width, this.librarian.shelf.linemap.height);
+    shader.uniforms['linemapSize'].set2f(shelf.linemap.width, shelf.linemap.height);
     gl.activeTexture(gl.TEXTURE1);
-    gl.bindTexture(gl.TEXTURE_2D, this.librarian.shelf.linemap.texture.glTexture);
+    gl.bindTexture(gl.TEXTURE_2D, shelf.linemap.texture.glTexture);
 
     shader.uniforms['glyphmap'].set1i(2);
     shader.uniforms['glyphmapSize'].set2f(this.glyphmap.width, this.glyphmap.height);
@@ -267,12 +226,12 @@ wideboard.App.prototype.render = function() {
     shader.attributes['vpos'].set2f(this.posBuffer.glBuffer, 8, 0);
     shader.attributes['vtex'].set2f(this.texBuffer.glBuffer, 8, 0);
 
+    shader.attributes['iColor'].set4f(shelf.docColorBuffer.glBuffer, 16, 0, true);
+    shader.attributes['iDocPos'].set4f(shelf.docPosBuffer.glBuffer, 16, 0, true);
+
     //----------
 
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer.glBuffer);
-
-    var cursorX = 0;
-    var cursorY = 0;
 
     shader.uniforms['cursor'].set(Math.floor(goog.now() / 30) % 100, Math.floor(goog.now() / 300) % 100);
     shader.uniforms['background'].set(0, 0, 0.2, 1);
@@ -281,28 +240,15 @@ wideboard.App.prototype.render = function() {
     var s = Math.sin(goog.now() / 100) * 0.03;
     shader.uniforms['lineHighlight'].set(0.2 + s, 0.2 + s, 0.3 + s, 1.0);
 
-    for (var i = 0; i < this.librarian.documents.length; i++) {
-      var document = this.librarian.documents[i];
-
-      var s2 = 1.0;
-      //s2 = Math.pow(2.0, -(i % 5));
-      //s2 += Math.sin(goog.now() / 1000) * 0.2;
-
-      this.uniforms['modelToWorld'].set(cursorX, cursorY, s2, s2);
-      //shader.uniforms['background'].set((i % 255) / 255.0, 0.0, 0.2, 1.0);
-      //shader.uniforms['foreground'].set(1.0, (i % 173) / 173, 0.2, 1.0);
-
-      shader.uniforms['docSize'].set2f(128, document.linePos.length);
-      shader.uniforms['docScroll'].set1f(document.shelfPos);
-      shader.setUniforms();
-      gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, 0);
-
-      cursorY += document.linePos.length * 14 + 300;
-      if (cursorY > 60000) {
-        cursorY = 0;
-        cursorX += 1024;
-      }
+    /*
+    for (var i = 0; i < shelf.documents.length; i++) {
+      shelf.docPosBuffer.data[i * 4] = Math.sin(goog.now() / 10000 + i) * 100000 + 50000;
     }
+    shelf.docPosBuffer.uploadDirty(0, shelf.documents.length);
+    */
+
+    shader.setUniforms();
+    gl.drawElementsInstancedANGLE(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, 0, shelf.documents.length);
   }
 };
 
@@ -369,21 +315,34 @@ wideboard.App.prototype.run = function(canvasElementId) {
   this.grid = new wideboard.Grid(this.debugDraw, this.camera);
 
   this.posBuffer = new wideboard.Buffer(gl, 'vpos', gl.STATIC_DRAW);
-  this.posBuffer.initVec2([0, 0, 0, 1, 1, 1, 1, 0]);
+  this.posBuffer.initVec2([
+    0, 0,
+    0, 1,
+    1, 1,
+    1, 0
+  ]);
 
-  this.colBuffer = new wideboard.Buffer(gl, 'vcol', gl.STATIC_DRAW);
+  this.colBuffer = new wideboard.Buffer(gl, 'iColor', gl.STATIC_DRAW);
   this.colBuffer.initVec4([
-    0.5, 0, 0.5, 1,
-    1, 0.5, 0, 1,
-    0.5, 1, 0.5, 1,
-    0, 0.5, 1, 1
+    0.5, 0.0, 0.5, 1.0,
+    1.0, 0.5, 0.0, 1.0,
+    0.5, 1.0, 0.5, 1.0,
+    0.0, 0.5, 1.0, 1.0
   ]);
 
   this.texBuffer = new wideboard.Buffer(gl, 'vtex', gl.STATIC_DRAW);
-  this.texBuffer.initVec2([0, 0, 0, 1, 1, 1, 1, 0]);
+  this.texBuffer.initVec2([
+    0, 0,
+    0, 1,
+    1, 1,
+    1, 0
+  ]);
 
   this.indexBuffer = new wideboard.Buffer(gl, 'indices', gl.STATIC_DRAW);
-  this.indexBuffer.initIndex8([0, 1, 2, 0, 2, 3]);
+  this.indexBuffer.initIndex8([
+    0, 1, 2,
+    0, 2, 3
+  ]);
 
   this.texture = new wideboard.Texture(gl, 128, 128, gl.RGBA, true);
   this.texture.makeNoise();
@@ -404,7 +363,8 @@ wideboard.App.prototype.run = function(canvasElementId) {
 
   // Librarian
   this.librarian = new wideboard.Librarian(context);
-  this.librarian.loadFiles(allFiles);
+  this.librarian.loadDirectory('closure-library/closure/goog', 0);
+  this.librarian.loadDirectory('node_modules', 1);
 
   window.requestAnimationFrame(this.frameCallback);
 };

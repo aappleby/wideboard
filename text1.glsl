@@ -1,9 +1,5 @@
-uniform vec4 modelToWorld;
 uniform vec4 worldToView;
 uniform vec4 screenSize;
-
-uniform vec2 docSize;
-uniform float docScroll;
 
 uniform sampler2D docmap;
 uniform sampler2D linemap;
@@ -21,20 +17,28 @@ uniform vec4 foreground;
 uniform vec4 lineHighlight;
 uniform vec2 cursor;
 
-attribute vec2 vpos;
-attribute vec2 vtex;
-
 varying vec2 ftex;
-varying vec2 fscale;
+varying vec4 fcol;
+varying float fShelfPos;
 
 #ifdef _VERTEX_
 
+attribute vec2 vpos;
+attribute vec2 vtex;
+attribute vec4 iColor;
+
+// X: screen X
+// Y: screen Y
+// Z: line count
+// W: shelf position
+attribute vec4 iDocPos;
+//uniform vec4 iDocPos;
+
 void main(void) {
   vec2 p = vpos;
-  p *= docSize;
   p *= glyphSize;
-  p *= modelToWorld.zw;
-  p += modelToWorld.xy;
+  p *= vec2(128.0, iDocPos.z);
+  p += iDocPos.xy;
   p += worldToView.xy;
   p *= worldToView.zw;
   p -= screenSize.xy;
@@ -43,8 +47,10 @@ void main(void) {
   p -= vec2(1.0, 1.0);
   p *= vec2(1.0, -1.0);
   gl_Position = vec4(p.x, p.y, 1.0, 1.0);
-  ftex = vtex * docSize;
-  fscale = worldToView.zw;
+
+  ftex = vpos * vec2(128.0, iDocPos.z);
+  fcol = iColor;
+  fShelfPos = iDocPos.w;
 }
 
 #else
@@ -58,7 +64,7 @@ void main(void) {
   vec2 docPos = floor(cellPos);
   cellPos -= docPos;
 
-  vec4 back = background;
+  vec4 back = fcol;
   if (docPos.y == cursor.y) {
     back = lineHighlight;
     if (docPos.x == cursor.x) {
@@ -69,7 +75,7 @@ void main(void) {
   }
 
 
-  docPos.y += docScroll;
+  docPos.y += fShelfPos;
 
   vec2 docmapPos = vec2(mod(docPos.y, docmapSize.x), floor(docPos.y / docmapSize.x));
 

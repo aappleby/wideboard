@@ -127,13 +127,33 @@ wideboard.Buffer.prototype.resetCursor = function() {
   this.cursor = 0;
 };
 
+
 /**
+ * Re-uploads the whole buffer.
  */
 wideboard.Buffer.prototype.upload = function() {
   var gl = this.gl;
   gl.bindBuffer(gl.ARRAY_BUFFER, this.glBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, this.data, gl.DYNAMIC_DRAW);
 };
+
+
+/**
+ * Re-uploads only the elements in [begin,end)
+ * @param {number} begin
+ * @param {number} end
+ */
+wideboard.Buffer.prototype.uploadDirty = function(begin, end) {
+  var byteOffset = begin * this.stride;
+  var length = (end - begin) * this.size;
+
+  var chunk = new Float32Array(this.data.buffer, byteOffset, length);
+
+  var gl = this.gl;
+  gl.bindBuffer(gl.ARRAY_BUFFER, this.glBuffer);
+  gl.bufferSubData(gl.ARRAY_BUFFER, byteOffset, chunk);
+};
+
 
 /*
 wideboard.Buffer.prototype.bind = function() {
