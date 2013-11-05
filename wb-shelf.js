@@ -10,6 +10,8 @@ goog.require('wideboard.Buffer');
 goog.require('wideboard.Texture');
 
 
+var globalShelfIndex = 0;
+
 
 /**
  * @param {!wideboard.Context} context
@@ -19,6 +21,8 @@ goog.require('wideboard.Texture');
  * @struct
  */
 wideboard.Shelf = function(context, width, height) {
+  this.shelfIndex = globalShelfIndex++;
+
   /** @type {!Array.<!wideboard.Document>} */
   this.documents = [];
 
@@ -122,7 +126,7 @@ wideboard.Shelf.prototype.addDocument2 = function(bytes, lineStarts, lineLengths
 
   this.documents.push(document);
 
-  document.screenX = this.screenCursorX;
+  document.screenX = this.screenCursorX + 40000 * this.shelfIndex;
   document.screenY = this.screenCursorY;
 
   this.docPosBuffer.data[document.shelfIndex * 4 + 0] = document.screenX;
@@ -136,7 +140,7 @@ wideboard.Shelf.prototype.addDocument2 = function(bytes, lineStarts, lineLengths
   this.docColorBuffer.data[document.shelfIndex * 4 + 3] = 1.0;
 
   this.screenCursorY += lineCount * 14 + 300;
-  if (this.screenCursorY > 60000) {
+  if (this.screenCursorY > 200000) {
     this.screenCursorY = 0;
     this.screenCursorX += 1024;
   }

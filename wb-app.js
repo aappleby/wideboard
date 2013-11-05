@@ -198,22 +198,10 @@ wideboard.App.prototype.render = function() {
 
   if (this.posBuffer && this.texBuffer && this.indexBuffer) {
 
-    var shelf = this.librarian.shelves[0];
-
     var shader = this.textShader;
 
     gl.useProgram(shader.glProgram);
     gl.enable(gl.BLEND);
-
-    shader.uniforms['docmap'].set1i(0);
-    shader.uniforms['docmapSize'].set2f(shelf.width, shelf.height);
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, shelf.texture.glTexture);
-
-    shader.uniforms['linemap'].set1i(1);
-    shader.uniforms['linemapSize'].set2f(shelf.linemap.width, shelf.linemap.height);
-    gl.activeTexture(gl.TEXTURE1);
-    gl.bindTexture(gl.TEXTURE_2D, shelf.linemap.texture.glTexture);
 
     shader.uniforms['glyphmap'].set1i(2);
     shader.uniforms['glyphmapSize'].set2f(this.glyphmap.width, this.glyphmap.height);
@@ -224,10 +212,7 @@ wideboard.App.prototype.render = function() {
 
 
     shader.attributes['vpos'].set2f(this.posBuffer.glBuffer, 8, 0);
-    shader.attributes['vtex'].set2f(this.texBuffer.glBuffer, 8, 0);
 
-    shader.attributes['iColor'].set4f(shelf.docColorBuffer.glBuffer, 16, 0, true);
-    shader.attributes['iDocPos'].set4f(shelf.docPosBuffer.glBuffer, 16, 0, true);
 
     //----------
 
@@ -247,8 +232,26 @@ wideboard.App.prototype.render = function() {
     shelf.docPosBuffer.uploadDirty(0, shelf.documents.length);
     */
 
-    shader.setUniforms();
-    gl.drawElementsInstancedANGLE(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, 0, shelf.documents.length);
+    for (var i = 0; i < this.librarian.shelves.length; i++) {
+      var shelf = this.librarian.shelves[i];
+
+      shader.uniforms['docmap'].set1i(0);
+      shader.uniforms['docmapSize'].set2f(shelf.width, shelf.height);
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, shelf.texture.glTexture);
+
+      shader.uniforms['linemap'].set1i(1);
+      shader.uniforms['linemapSize'].set2f(shelf.linemap.width, shelf.linemap.height);
+      gl.activeTexture(gl.TEXTURE1);
+      gl.bindTexture(gl.TEXTURE_2D, shelf.linemap.texture.glTexture);
+
+      shader.attributes['iColor'].set4f(shelf.docColorBuffer.glBuffer, 16, 0, true);
+      shader.attributes['iDocPos'].set4f(shelf.docPosBuffer.glBuffer, 16, 0, true);
+
+      shader.setUniforms();
+
+      gl.drawElementsInstancedANGLE(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, 0, shelf.documents.length);
+    }
   }
 };
 
@@ -364,7 +367,36 @@ wideboard.App.prototype.run = function(canvasElementId) {
   // Librarian
   this.librarian = new wideboard.Librarian(context);
   this.librarian.loadDirectory('closure-library/closure/goog', 0);
-  this.librarian.loadDirectory('node_modules', 1);
+  this.librarian.loadDirectory('closure-library/closure/goog', 1);
+  this.librarian.loadDirectory('closure-library/closure/goog', 2);
+  this.librarian.loadDirectory('closure-library/closure/goog', 3);
+  this.librarian.loadDirectory('closure-library/closure/goog', 4);
+  this.librarian.loadDirectory('closure-library/closure/goog', 5);
+  this.librarian.loadDirectory('closure-library/closure/goog', 6);
+  this.librarian.loadDirectory('closure-library/closure/goog', 7);
+  this.librarian.loadDirectory('closure-library/closure/goog', 8);
+  this.librarian.loadDirectory('closure-library/closure/goog', 9);
+  this.librarian.loadDirectory('closure-library/closure/goog', 10);
+  this.librarian.loadDirectory('closure-library/closure/goog', 11);
+  this.librarian.loadDirectory('closure-library/closure/goog', 12);
+  this.librarian.loadDirectory('closure-library/closure/goog', 13);
+  this.librarian.loadDirectory('closure-library/closure/goog', 14);
+  this.librarian.loadDirectory('closure-library/closure/goog', 15);
+  this.librarian.loadDirectory('closure-library/closure/goog', 16);
+  this.librarian.loadDirectory('closure-library/closure/goog', 17);
+  this.librarian.loadDirectory('closure-library/closure/goog', 18);
+  this.librarian.loadDirectory('closure-library/closure/goog', 19);
+  this.librarian.loadDirectory('closure-library/closure/goog', 20);
+  this.librarian.loadDirectory('closure-library/closure/goog', 21);
+  this.librarian.loadDirectory('closure-library/closure/goog', 22);
+  this.librarian.loadDirectory('closure-library/closure/goog', 23);
+  this.librarian.loadDirectory('closure-library/closure/goog', 24);
+  this.librarian.loadDirectory('closure-library/closure/goog', 25);
+  this.librarian.loadDirectory('closure-library/closure/goog', 26);
+  this.librarian.loadDirectory('closure-library/closure/goog', 27);
+  this.librarian.loadDirectory('closure-library/closure/goog', 28);
+  this.librarian.loadDirectory('closure-library/closure/goog', 29);
+  
 
   window.requestAnimationFrame(this.frameCallback);
 };
