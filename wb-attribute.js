@@ -69,7 +69,7 @@ wideboard.Attribute.prototype.set3f = function(buffer, stride, offset) {
  * @param {!WebGLBuffer} buffer
  * @param {number} stride
  * @param {number} offset
- * @param {boolean} instanced
+ * @param {?boolean} instanced
  */
 wideboard.Attribute.prototype.set4f = function(buffer, stride, offset, instanced) {
   if (this.location >= 0) {

@@ -49,7 +49,7 @@ void main(void) {
   gl_Position = vec4(p.x, p.y, 1.0, 1.0);
 
   ftex = vpos * vec2(128.0, iDocPos.z);
-  fcol = iColor;
+  fcol = iColor;// + vec4(sin(p.x * 12.0), 0.0, 0.0, 0.0);
   fShelfPos = iDocPos.w;
 }
 

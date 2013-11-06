@@ -55,12 +55,6 @@ wideboard.Shelf = function(context, width, height) {
   /** @type {number} */
   this.cleanCursorY = 0;
 
-  /** @type {number} */
-  this.screenCursorX = 0;
-
-  /** @type {number} */
-  this.screenCursorY = 0;
-
   /** @type {!wideboard.Linemap} */
   this.linemap = new wideboard.Linemap(this.context, 4096, 4096);
 
@@ -105,8 +99,10 @@ wideboard.Shelf.prototype.addDocument = function(linePos, lineLength) {
  * @param {!Uint8Array} bytes
  * @param {!Array.<number>} lineStarts
  * @param {!Array.<number>} lineLengths
+ * @param {number} screenX
+ * @param {number} screenY
  */
-wideboard.Shelf.prototype.addDocument2 = function(bytes, lineStarts, lineLengths) {
+wideboard.Shelf.prototype.addDocument2 = function(bytes, lineStarts, lineLengths, screenX, screenY) {
 
   var document = new wideboard.Document();
   document.shelfIndex = this.documents.length;
@@ -126,8 +122,8 @@ wideboard.Shelf.prototype.addDocument2 = function(bytes, lineStarts, lineLengths
 
   this.documents.push(document);
 
-  document.screenX = this.screenCursorX + 40000 * this.shelfIndex;
-  document.screenY = this.screenCursorY;
+  document.screenX = screenX;
+  document.screenY = screenY;
 
   this.docPosBuffer.data[document.shelfIndex * 4 + 0] = document.screenX;
   this.docPosBuffer.data[document.shelfIndex * 4 + 1] = document.screenY;
@@ -138,12 +134,6 @@ wideboard.Shelf.prototype.addDocument2 = function(bytes, lineStarts, lineLengths
   this.docColorBuffer.data[document.shelfIndex * 4 + 1] = (document.shelfIndex * 0.007) % 0.2;
   this.docColorBuffer.data[document.shelfIndex * 4 + 2] = 0.2;
   this.docColorBuffer.data[document.shelfIndex * 4 + 3] = 1.0;
-
-  this.screenCursorY += lineCount * 14 + 300;
-  if (this.screenCursorY > 200000) {
-    this.screenCursorY = 0;
-    this.screenCursorX += 1024;
-  }
 
   this.updateTexture();
   this.linemap.updateTexture();

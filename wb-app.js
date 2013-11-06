@@ -366,37 +366,7 @@ wideboard.App.prototype.run = function(canvasElementId) {
 
   // Librarian
   this.librarian = new wideboard.Librarian(context);
-  this.librarian.loadDirectory('closure-library/closure/goog', 0);
-  this.librarian.loadDirectory('closure-library/closure/goog', 1);
-  this.librarian.loadDirectory('closure-library/closure/goog', 2);
-  this.librarian.loadDirectory('closure-library/closure/goog', 3);
-  this.librarian.loadDirectory('closure-library/closure/goog', 4);
-  this.librarian.loadDirectory('closure-library/closure/goog', 5);
-  this.librarian.loadDirectory('closure-library/closure/goog', 6);
-  this.librarian.loadDirectory('closure-library/closure/goog', 7);
-  this.librarian.loadDirectory('closure-library/closure/goog', 8);
-  this.librarian.loadDirectory('closure-library/closure/goog', 9);
-  this.librarian.loadDirectory('closure-library/closure/goog', 10);
-  this.librarian.loadDirectory('closure-library/closure/goog', 11);
-  this.librarian.loadDirectory('closure-library/closure/goog', 12);
-  this.librarian.loadDirectory('closure-library/closure/goog', 13);
-  this.librarian.loadDirectory('closure-library/closure/goog', 14);
-  this.librarian.loadDirectory('closure-library/closure/goog', 15);
-  this.librarian.loadDirectory('closure-library/closure/goog', 16);
-  this.librarian.loadDirectory('closure-library/closure/goog', 17);
-  this.librarian.loadDirectory('closure-library/closure/goog', 18);
-  this.librarian.loadDirectory('closure-library/closure/goog', 19);
-  this.librarian.loadDirectory('closure-library/closure/goog', 20);
-  this.librarian.loadDirectory('closure-library/closure/goog', 21);
-  this.librarian.loadDirectory('closure-library/closure/goog', 22);
-  this.librarian.loadDirectory('closure-library/closure/goog', 23);
-  this.librarian.loadDirectory('closure-library/closure/goog', 24);
-  this.librarian.loadDirectory('closure-library/closure/goog', 25);
-  this.librarian.loadDirectory('closure-library/closure/goog', 26);
-  this.librarian.loadDirectory('closure-library/closure/goog', 27);
-  this.librarian.loadDirectory('closure-library/closure/goog', 28);
-  this.librarian.loadDirectory('closure-library/closure/goog', 29);
-  
+  this.librarian.loadDirectory('linux');
 
   window.requestAnimationFrame(this.frameCallback);
 };
