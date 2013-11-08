@@ -88,6 +88,9 @@ wideboard.App = function() {
 
   /** @type {!Object.<string, !wideboard.Uniform>} */
   this.uniforms = {};
+  
+  /** @type {number} */
+  this.appStart = goog.now();
 
   this.pickX = 0;
   this.pickY = 0;
@@ -218,12 +221,16 @@ wideboard.App.prototype.render = function() {
 
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer.glBuffer);
 
-    shader.uniforms['cursor'].set(Math.floor(goog.now() / 30) % 100, Math.floor(goog.now() / 300) % 100);
+    var cursor = Math.floor(goog.now() / 30) % 5000;
+
+    shader.uniforms['cursor'].set(cursor % 80, Math.floor(cursor / 80));
     shader.uniforms['background'].set(0, 0, 0.2, 1);
     shader.uniforms['foreground'].set(0.9, 0.9, 0.9, 1);
+    shader.uniforms['wavey'].set(wavey);
+    shader.uniforms['ftime'].set((this.appStart - goog.now()) / 1000);
 
-    var s = Math.sin(goog.now() / 100) * 0.03;
-    shader.uniforms['lineHighlight'].set(0.2 + s, 0.2 + s, 0.3 + s, 1.0);
+    var s = Math.sin(goog.now() / 100) * 0.02;
+    shader.uniforms['lineHighlight'].set(0.15 + s, 0.15 + s, 0.15 + s, 0.0);
 
     /*
     for (var i = 0; i < shelf.documents.length; i++) {

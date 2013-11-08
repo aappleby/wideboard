@@ -57,31 +57,42 @@ wideboard.Camera.prototype.onMouseClick = function(x, y) {
  * @param {number} x
  * @param {number} y
  * @param {number} delta
+ * @param {boolean} shiftKey
+ * @param {boolean} ctrlKey
+ * @param {boolean} altKey
  */
-wideboard.Camera.prototype.onMouseWheel = function(x, y, delta) {
-  delta = (delta > 0) - (delta < 0);
+wideboard.Camera.prototype.onMouseWheel = function(x, y, delta, shiftKey, ctrlKey, altKey) {
+  if (shiftKey) {
+    delta = (delta > 0) - (delta < 0);
 
-  var oldZoom = Math.log(this.viewGoal.scale) / Math.log(2);
-  var step = 1.0;
-  oldZoom = Math.round(oldZoom / step) * step;
-  var newZoom = oldZoom + delta * step;
-  if (newZoom < -10) newZoom = -10;
-  if (newZoom > 2) newZoom = 2;
-  var newDelta = newZoom - oldZoom;
+    var oldZoom = Math.log(this.viewGoal.scale) / Math.log(2);
+    var step = 0.5;
+    oldZoom = Math.round(oldZoom / step) * step;
+    var newZoom = oldZoom + delta * step;
+    if (newZoom < -10) newZoom = -10;
+    if (newZoom > 2) newZoom = 2;
+    var newDelta = newZoom - oldZoom;
 
-  // Convert from screen space to graph space.
+    // Convert from screen space to graph space.
 
-  x = wideboard.util.screenToWorldX(x, this.gl.canvas, this.viewGoal);
-  y = wideboard.util.screenToWorldY(y, this.gl.canvas, this.viewGoal);
+    x = wideboard.util.screenToWorldX(x, this.gl.canvas, this.viewGoal);
+    y = wideboard.util.screenToWorldY(y, this.gl.canvas, this.viewGoal);
 
-  this.viewGoal.origin.x -= x;
-  this.viewGoal.origin.y -= y;
-  this.viewGoal.origin.x /= Math.pow(2.0, newDelta);
-  this.viewGoal.origin.y /= Math.pow(2.0, newDelta);
-  this.viewGoal.origin.x += x;
-  this.viewGoal.origin.y += y;
+    this.viewGoal.origin.x -= x;
+    this.viewGoal.origin.y -= y;
+    this.viewGoal.origin.x /= Math.pow(2.0, newDelta);
+    this.viewGoal.origin.y /= Math.pow(2.0, newDelta);
+    this.viewGoal.origin.x += x;
+    this.viewGoal.origin.y += y;
 
-  this.viewGoal.scale = Math.pow(2.0, newZoom);
+    this.viewGoal.scale = Math.pow(2.0, newZoom);
+
+    this.viewGoalSnap.copy(this.viewGoal);
+    wideboard.util.snapView(this.viewGoalSnap, this.gl.canvas);
+    return;
+  }
+  
+  this.viewGoal.origin.y -= delta / this.viewGoal.scale;
 
   this.viewGoalSnap.copy(this.viewGoal);
   wideboard.util.snapView(this.viewGoalSnap, this.gl.canvas);
@@ -92,8 +103,10 @@ wideboard.Camera.prototype.onMouseWheel = function(x, y, delta) {
  * @param {number} x
  * @param {number} y
  */
-wideboard.Camera.prototype.onDragBegin = function(x, y) {
-  this.oldView.copy(this.view);
+wideboard.Camera.prototype.onDragBegin = function(x, y, shiftKey, ctrlKey, altKey) {
+  if (shiftKey) {
+    this.oldView.copy(this.view);
+  }
 };
 
 
@@ -101,13 +114,15 @@ wideboard.Camera.prototype.onDragBegin = function(x, y) {
  * @param {number} dx
  * @param {number} dy
  */
-wideboard.Camera.prototype.onDragUpdate = function(dx, dy) {
+wideboard.Camera.prototype.onDragUpdate = function(dx, dy, shiftKey, ctrlKey, altKey) {
   //this.viewGoal.copy(this.oldView);
-  this.viewGoal.origin.x -= dx / this.viewGoal.scale;
-  this.viewGoal.origin.y -= dy / this.viewGoal.scale;
+  if (shiftKey) {
+    this.viewGoal.origin.x -= dx / this.viewGoal.scale;
+    this.viewGoal.origin.y -= dy / this.viewGoal.scale;
 
-  this.viewGoalSnap.copy(this.viewGoal);
-  wideboard.util.snapView(this.viewGoalSnap, this.gl.canvas);
+    this.viewGoalSnap.copy(this.viewGoal);
+    wideboard.util.snapView(this.viewGoalSnap, this.gl.canvas);
+  }
 };
 
 
@@ -124,4 +139,61 @@ wideboard.Camera.prototype.onDragCancel = function(x, y) {
  * @param {number} y
  */
 wideboard.Camera.prototype.onDragEnd = function(x, y) {
+};
+
+
+/**
+ * @param {number} key
+ * @param {boolean} shiftKey
+ * @param {boolean} ctrlKey
+ * @param {boolean} altKey
+ */
+wideboard.Camera.prototype.onKeyDown = function(key, shiftKey, ctrlKey, altKey) {
+  if (key == 33) {
+    this.viewGoal.origin.y -= 800 / this.viewGoal.scale;
+    this.viewGoalSnap.copy(this.viewGoal);
+    wideboard.util.snapView(this.viewGoalSnap, this.gl.canvas);
+    return;
+  }
+
+  if (key == 34) {
+    this.viewGoal.origin.y += 800 / this.viewGoal.scale;
+    this.viewGoalSnap.copy(this.viewGoal);
+    wideboard.util.snapView(this.viewGoalSnap, this.gl.canvas);
+    return;
+  }
+  
+  // left
+  if (key == 37) {
+    this.viewGoal.origin.x -= 100 / this.viewGoal.scale;
+    this.viewGoalSnap.copy(this.viewGoal);
+    wideboard.util.snapView(this.viewGoalSnap, this.gl.canvas);
+    return;
+  }
+  
+  // up
+  if (key == 38) {
+    this.viewGoal.origin.y -= 100 / this.viewGoal.scale;
+    this.viewGoalSnap.copy(this.viewGoal);
+    wideboard.util.snapView(this.viewGoalSnap, this.gl.canvas);
+    return;
+  }
+  
+  // right
+  if (key == 39) {
+    this.viewGoal.origin.x += 100 / this.viewGoal.scale;
+    this.viewGoalSnap.copy(this.viewGoal);
+    wideboard.util.snapView(this.viewGoalSnap, this.gl.canvas);
+    return;
+  }
+  
+  // down
+  if (key == 40) {
+    this.viewGoal.origin.y += 100 / this.viewGoal.scale;
+    this.viewGoalSnap.copy(this.viewGoal);
+    wideboard.util.snapView(this.viewGoalSnap, this.gl.canvas);
+    return;
+  }
+  
+  console.log(key);
 };

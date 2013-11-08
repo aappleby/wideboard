@@ -50,6 +50,9 @@ wideboard.Controls.prototype.install = function(element) {
   target.addEventListener('mousewheel',
       /** @type {function(Event)} */(goog.bind(this.onMouseWheel, this)), true);
 
+  target.addEventListener('keydown',
+      /** @type {function(Event)} */(goog.bind(this.onKeyDown, this)), true);
+
   goog.global.console.log('Wideboard controls installed.');
 };
 
@@ -82,12 +85,14 @@ wideboard.Controls.prototype.onMouseUp = function(event) {
   var targets = this.targets;
   if (this.dragging) {
     for (var i = 0; i < targets.length; i++) {
-      targets[i].onDragEnd(event.x, event.y);
+      targets[i].onDragEnd(event.x, event.y,
+                           event.shiftKey, event.ctrlKey, event.altKey);
     }
     this.dragging = false;
   } else {
     for (var i = 0; i < targets.length; i++) {
-      targets[i].onMouseClick(event.x, event.y);
+      targets[i].onMouseClick(event.x, event.y,
+                              event.shiftKey, event.ctrlKey, event.altKey);
     }
   }
 };
@@ -103,15 +108,18 @@ wideboard.Controls.prototype.handleMouseMove = function(mouseX, mouseY) {
     if (this.dragging) {
       for (var i = 0; i < targets.length; i++) {
         targets[i].onDragUpdate(mouseX - this.mouseX,
-                                mouseY - this.mouseY);
+                                mouseY - this.mouseY,
+                                event.shiftKey, event.ctrlKey, event.altKey);
       }
     } else {
       if ((Math.abs(this.mouseDownX - mouseX) > 2) ||
           (Math.abs(this.mouseDownY - mouseY) > 2)) {
         for (var i = 0; i < targets.length; i++) {
-          targets[i].onDragBegin(this.mouseDownX, this.mouseDownY);
+          targets[i].onDragBegin(this.mouseDownX, this.mouseDownY,
+                                 event.shiftKey, event.ctrlKey, event.altKey);
           targets[i].onDragUpdate(mouseX - this.mouseDownX,
-                                  mouseY - this.mouseDownY);
+                                  mouseY - this.mouseDownY,
+                                  event.shiftKey, event.ctrlKey, event.altKey);
         }
         this.dragging = true;
       }
@@ -138,6 +146,24 @@ wideboard.Controls.prototype.onMouseWheel = function(event) {
   this.handleMouseMove(event.x, event.y);
   var targets = this.targets;
   for (var i = 0; i < targets.length; i++) {
-    targets[i].onMouseWheel(event.x, event.y, event.wheelDelta); //event.wheelDelta > 0 ? 1 : -1);
+    targets[i].onMouseWheel(event.x, event.y, event.wheelDelta,
+                            event.shiftKey, event.ctrlKey, event.altKey);
+  }
+};
+
+wavey = 0.0;
+
+/**
+ * @param {!KeyboardEvent} event
+ */
+wideboard.Controls.prototype.onKeyDown = function(event) {
+  if (event.ctrlKey && event.keyCode == 81) {
+    wavey = 1.0 - wavey;
+  }
+
+  var targets = this.targets;
+  for (var i = 0; i < targets.length; i++) {
+    targets[i].onKeyDown(event.keyCode,
+                         event.shiftKey, event.ctrlKey, event.altKey);
   }
 };

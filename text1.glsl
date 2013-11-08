@@ -17,6 +17,9 @@ uniform vec4 foreground;
 uniform vec4 lineHighlight;
 uniform vec2 cursor;
 
+uniform float wavey;
+uniform float ftime;
+
 varying vec2 ftex;
 varying vec4 fcol;
 varying float fShelfPos;
@@ -39,6 +42,10 @@ void main(void) {
   p *= glyphSize;
   p *= vec2(128.0, iDocPos.z);
   p += iDocPos.xy;
+
+  float phase = (iDocPos.x / 10000.0) + 0.31 * (iDocPos.y / 10000.0);
+  p += vec2(sin(ftime + phase), cos(ftime * 1.1 + phase)) * 1000.0 * wavey;
+
   p += worldToView.xy;
   p *= worldToView.zw;
   p -= screenSize.xy;
@@ -49,7 +56,9 @@ void main(void) {
   gl_Position = vec4(p.x, p.y, 1.0, 1.0);
 
   ftex = vpos * vec2(128.0, iDocPos.z);
-  fcol = iColor;// + vec4(sin(p.x * 12.0), 0.0, 0.0, 0.0);
+  fcol = iColor;
+  float blah = sin(ftime + phase) * -0.2 + 0.2;
+  fcol += vec4(blah, blah, blah, 0.0) * wavey;
   fShelfPos = iDocPos.w;
 }
 
@@ -66,10 +75,10 @@ void main(void) {
 
   vec4 back = fcol;
   if (docPos.y == cursor.y) {
-    back = lineHighlight;
+    back += lineHighlight;
     if (docPos.x == cursor.x) {
       if (cellPos.x <= 0.125) {
-        back = vec4(0.8, 0.8, 0.8, 0.4);
+        back = vec4(0.8, 0.8, 0.8, 0.7);
       }
     }
   }

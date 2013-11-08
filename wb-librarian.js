@@ -35,37 +35,6 @@ wideboard.Librarian = function(context) {
   /** @type {!Array.<!wideboard.Shelf>} */
   this.shelves = [];
   this.shelves.push(new wideboard.Shelf(context, 1024, 1024));
-  /*
-  this.shelves.push(new wideboard.Shelf(context, 1024, 1024));
-  this.shelves.push(new wideboard.Shelf(context, 1024, 1024));
-  this.shelves.push(new wideboard.Shelf(context, 1024, 1024));
-  this.shelves.push(new wideboard.Shelf(context, 1024, 1024));
-  this.shelves.push(new wideboard.Shelf(context, 1024, 1024));
-  this.shelves.push(new wideboard.Shelf(context, 1024, 1024));
-  this.shelves.push(new wideboard.Shelf(context, 1024, 1024));
-  this.shelves.push(new wideboard.Shelf(context, 1024, 1024));
-  this.shelves.push(new wideboard.Shelf(context, 1024, 1024));
-  this.shelves.push(new wideboard.Shelf(context, 1024, 1024));
-  this.shelves.push(new wideboard.Shelf(context, 1024, 1024));
-  this.shelves.push(new wideboard.Shelf(context, 1024, 1024));
-  this.shelves.push(new wideboard.Shelf(context, 1024, 1024));
-  this.shelves.push(new wideboard.Shelf(context, 1024, 1024));
-  this.shelves.push(new wideboard.Shelf(context, 1024, 1024));
-  this.shelves.push(new wideboard.Shelf(context, 1024, 1024));
-  this.shelves.push(new wideboard.Shelf(context, 1024, 1024));
-  this.shelves.push(new wideboard.Shelf(context, 1024, 1024));
-  this.shelves.push(new wideboard.Shelf(context, 1024, 1024));
-  this.shelves.push(new wideboard.Shelf(context, 1024, 1024));
-  this.shelves.push(new wideboard.Shelf(context, 1024, 1024));
-  this.shelves.push(new wideboard.Shelf(context, 1024, 1024));
-  this.shelves.push(new wideboard.Shelf(context, 1024, 1024));
-  this.shelves.push(new wideboard.Shelf(context, 1024, 1024));
-  this.shelves.push(new wideboard.Shelf(context, 1024, 1024));
-  this.shelves.push(new wideboard.Shelf(context, 1024, 1024));
-  this.shelves.push(new wideboard.Shelf(context, 1024, 1024));
-  this.shelves.push(new wideboard.Shelf(context, 1024, 1024));
-  this.shelves.push(new wideboard.Shelf(context, 1024, 1024));
-  */
 
   /** @type {number} */
   this.documentsRequested = 0;
@@ -86,7 +55,7 @@ wideboard.Librarian = function(context) {
  * requests in flight.
  */
 wideboard.Librarian.prototype.loadNext = function() {
-  while (this.inFlight < 5) {
+  while (this.inFlight < 10) {
     if (this.docQueue.length) {
       var doc = this.docQueue.pop();
       this.loadDocument(doc);
@@ -154,7 +123,7 @@ wideboard.Librarian.prototype.onDocumentLoad = function(filename, bytes) {
   this.screenCursorY += lineCount * 14 + 300;
   if (this.screenCursorY > 200000) {
     this.screenCursorY = 0;
-    this.screenCursorX += 1024;
+    this.screenCursorX += 1280;
   }
 
   this.loadNext();

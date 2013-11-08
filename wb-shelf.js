@@ -71,6 +71,8 @@ wideboard.Shelf = function(context, width, height) {
    */
   this.docColorBuffer = new wideboard.Buffer(context.getGl(), 'iDocColor', context.getGl().DYNAMIC_DRAW);
   this.docColorBuffer.initDynamic(4, 65536);
+
+  this.tempBuffer = new Uint8Array(1024);
 };
 
 
@@ -110,9 +112,31 @@ wideboard.Shelf.prototype.addDocument2 = function(bytes, lineStarts, lineLengths
   var lineCount = lineStarts.length;
 
   for (var i = 0; i < lineCount; i++) {
-      var pos = this.linemap.addLine(bytes, lineStarts[i], lineLengths[i]);
-      document.linePos.push(pos);
-      document.lineLength.push(lineLengths[i]);
+    var length = lineLengths[i];
+    var start = lineStarts[i];
+
+    if (this.tempBuffer.length < length * 2) {
+      this.tempBuffer = new Uint8Array(length * 2);
+    }
+    var cursor1 = 0;
+    var cursor2 = 0;
+    
+    for (var cursor1 = 0, cursor2 = 0; cursor1 < length; cursor1++) {
+      var c = bytes[start + cursor1];
+      if (c == 9) {
+        this.tempBuffer[cursor2++] = 32;
+        while(cursor2 % 8) {
+          this.tempBuffer[cursor2++] = 32;
+        }
+      } else {
+        this.tempBuffer[cursor2++] = c;
+      }
+    }
+
+    //var pos = this.linemap.addLine(bytes, lineStarts[i], lineLengths[i]);
+    var pos = this.linemap.addLine(this.tempBuffer, 0, cursor2);
+    document.linePos.push(pos);
+    document.lineLength.push(cursor2);
   }
 
   // Add the document to the shelf.
