@@ -49,7 +49,7 @@ wideboard.Linemap = function(context, width, height) {
 
   /** @type {!wideboard.Bitvec} */
   this.bitvec = new wideboard.Bitvec(width * height);
-  
+
   this.init();
 };
 

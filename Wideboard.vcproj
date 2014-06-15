@@ -93,6 +93,10 @@
 			>
 		</File>
 		<File
+			RelativePath=".\wb-allocator.js"
+			>
+		</File>
+		<File
 			RelativePath=".\wb-app.js"
 			>
 		</File>

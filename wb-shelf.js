@@ -120,12 +120,12 @@ wideboard.Shelf.prototype.addDocument2 = function(bytes, lineStarts, lineLengths
     }
     var cursor1 = 0;
     var cursor2 = 0;
-    
+
     for (var cursor1 = 0, cursor2 = 0; cursor1 < length; cursor1++) {
       var c = bytes[start + cursor1];
       if (c == 9) {
         this.tempBuffer[cursor2++] = 32;
-        while(cursor2 % 8) {
+        while (cursor2 % 8) {
           this.tempBuffer[cursor2++] = 32;
         }
       } else {

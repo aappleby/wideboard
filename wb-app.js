@@ -88,7 +88,7 @@ wideboard.App = function() {
 
   /** @type {!Object.<string, !wideboard.Uniform>} */
   this.uniforms = {};
-  
+
   /** @type {number} */
   this.appStart = goog.now();
 

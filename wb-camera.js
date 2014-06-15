@@ -91,7 +91,7 @@ wideboard.Camera.prototype.onMouseWheel = function(x, y, delta, shiftKey, ctrlKe
     wideboard.util.snapView(this.viewGoalSnap, this.gl.canvas);
     return;
   }
-  
+
   this.viewGoal.origin.y -= delta / this.viewGoal.scale;
 
   this.viewGoalSnap.copy(this.viewGoal);
@@ -162,7 +162,7 @@ wideboard.Camera.prototype.onKeyDown = function(key, shiftKey, ctrlKey, altKey) 
     wideboard.util.snapView(this.viewGoalSnap, this.gl.canvas);
     return;
   }
-  
+
   // left
   if (key == 37) {
     this.viewGoal.origin.x -= 100 / this.viewGoal.scale;
@@ -170,7 +170,7 @@ wideboard.Camera.prototype.onKeyDown = function(key, shiftKey, ctrlKey, altKey) 
     wideboard.util.snapView(this.viewGoalSnap, this.gl.canvas);
     return;
   }
-  
+
   // up
   if (key == 38) {
     this.viewGoal.origin.y -= 100 / this.viewGoal.scale;
@@ -178,7 +178,7 @@ wideboard.Camera.prototype.onKeyDown = function(key, shiftKey, ctrlKey, altKey) 
     wideboard.util.snapView(this.viewGoalSnap, this.gl.canvas);
     return;
   }
-  
+
   // right
   if (key == 39) {
     this.viewGoal.origin.x += 100 / this.viewGoal.scale;
@@ -186,7 +186,7 @@ wideboard.Camera.prototype.onKeyDown = function(key, shiftKey, ctrlKey, altKey) 
     wideboard.util.snapView(this.viewGoalSnap, this.gl.canvas);
     return;
   }
-  
+
   // down
   if (key == 40) {
     this.viewGoal.origin.y += 100 / this.viewGoal.scale;
@@ -194,6 +194,6 @@ wideboard.Camera.prototype.onKeyDown = function(key, shiftKey, ctrlKey, altKey) 
     wideboard.util.snapView(this.viewGoalSnap, this.gl.canvas);
     return;
   }
-  
+
   console.log(key);
 };
