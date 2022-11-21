@@ -1,7 +1,7 @@
 Wideboard
 =========
 
-This repo is an old proof of concept for "how much text can you render in a web browser at once?", for which the answer is "At least the entire Linux kernel, or as much text as will fit in your GPU's ram".
+This repo is an old proof of concept that I wrote in 2013 to answer the question "How much text can you render in a web browser at once?", for which the answer is "At least the entire Linux kernel, or as much text as will fit in your GPU's ram".
 
 Wideboard uses vanilla WebGL 1, some special shaders, and some GPU-compatible data structures to render arbitrarily large amounts of monospace, unformatted text in a web browser - you can zoom in and out on each file ala Google Maps, and it should render at 60 frames per second on even a weak integrated GPU.
 
