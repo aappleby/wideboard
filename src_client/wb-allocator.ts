@@ -1,7 +1,7 @@
 import * as wb from "./wb-bitvec.js"
 
 // Simple 2D allocator class.
-class Allocator {
+export class Allocator {
   width       : number;      // Allocator width.
   height      : number;      // Allocator height.
   bitvec      : wb.Bitvec;   // Cell occupancy bit vector.

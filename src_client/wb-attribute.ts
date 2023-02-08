@@ -1,6 +1,4 @@
-export { Attribute };
-
-class Attribute {
+export class Attribute {
   gl : WebGLRenderingContext;
   attribute_name : string;
   type : number;

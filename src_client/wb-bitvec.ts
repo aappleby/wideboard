@@ -1,6 +1,6 @@
 // Simple bit vector class for allocators.
 
-class Bitvec {
+export class Bitvec {
   constructor(size : number) {
     this.size = size;
     this.blockcount = (size + 31) >> 5;
@@ -186,4 +186,3 @@ class Bitvec {
     }
   };
 };
-export { Bitvec };

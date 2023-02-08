@@ -1,6 +1,4 @@
-export { Buffer };
-
-class Buffer {
+export class Buffer {
   gl : WebGLRenderingContext;
 
   buf_name : string;
@@ -11,7 +9,7 @@ class Buffer {
   size     : number;
   length   : number;
   indices  : boolean;
-  primType : number;
+  primType : GLenum;
   data     : Float32Array | null;
   cursor   : number;
   stride   : number;
