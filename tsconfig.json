@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "outDir": "out",
+    "sourceMap": true,
+    "baseUrl": ""
+  },
+  "files": [
+    "src/wb-app.ts",
+  ],
+}
