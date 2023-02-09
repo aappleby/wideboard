@@ -14,8 +14,8 @@ export class Uniform {
     gl : WebGLRenderingContext,
     name : string,
     type : number,
-    opt_location : WebGLUniformLocation | null,
-    opt_parent : Uniform | null)
+    opt_location : WebGLUniformLocation | null = null,
+    opt_parent : Uniform | null = null)
   {
     this.gl = gl;
     this.name = name;

@@ -67,41 +67,40 @@ export class Texture {
     return out;
   }
 
-  /*
   load(url : string) {
     let gl = this.gl;
     let image = new HTMLImageElement();
-    image.onload = goog.bind(function() {
-      this.width = image.width;
-      this.height = image.height;
+    let self = this;
+    image.onload = () => {
+      self.width = image.width;
+      self.height = image.height;
 
-      if (this.format == gl.LUMINANCE) {
-        let rgba = extractBytes(image);
+      if (self.format == gl.LUMINANCE) {
+        let rgba = self.extractBytes(image);
         let luminance = new Uint8Array(rgba.length / 4);
         for (let i = 0; i < luminance.length; i++) {
           luminance[i] = rgba[i * 4];
         }
-        //luminance = downscale(luminance, this.width, this.height);
-        //this.width /= 2;
-        //this.height /= 2;
-        gl.bindTexture(gl.TEXTURE_2D, this.glTexture);
-        gl.texImage2D(gl.TEXTURE_2D, 0, this.format,
-                      this.width, this.height, 0,
-                      this.format, gl.UNSIGNED_BYTE, luminance);
+        //luminance = downscale(luminance, self.width, self.height);
+        //self.width /= 2;
+        //self.height /= 2;
+        gl.bindTexture(gl.TEXTURE_2D, self.glTexture);
+        gl.texImage2D(gl.TEXTURE_2D, 0, self.format,
+                      self.width, self.height, 0,
+                      self.format, gl.UNSIGNED_BYTE, luminance);
       } else {
-        gl.bindTexture(gl.TEXTURE_2D, this.glTexture);
-        gl.texImage2D(gl.TEXTURE_2D, 0, this.format, this.format, gl.UNSIGNED_BYTE, image);
+        gl.bindTexture(gl.TEXTURE_2D, self.glTexture);
+        gl.texImage2D(gl.TEXTURE_2D, 0, self.format, self.format, gl.UNSIGNED_BYTE, image);
       }
 
-      if (this.filter) {
+      if (self.filter) {
         //gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
         //gl.generateMipmap(gl.TEXTURE_2D);
       }
-      this.ready = true;
-    }, this);
+      self.ready = true;
+    };
     image.src = url;
   };
-  */
 
   makeChecker() {
     let gl = this.gl;
