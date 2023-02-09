@@ -110,7 +110,7 @@ export class Draw {
               r1 : number, g1 : number, b1 : number, a1 : number,
               x2 : number, y2 : number, z2 : number,
               r2 : number, g2 : number, b2 : number, a2 : number) {
-    if (!this.currentBuffer || (this.currentBuffer.primType != this.gl.LINES)) {
+    if (!this.currentBuffer) {
       this.endBuffer();
       this.startBuffer(this.gl.LINES);
     }
@@ -149,7 +149,6 @@ export class Draw {
       // Each buffer can hold 4096 vertices.
       nextBuffer.initDynamic(7, 4096);
     }
-    nextBuffer.primType = primitiveType;
     this.currentBuffer = nextBuffer;
   };
 
@@ -169,13 +168,13 @@ export class Draw {
     }
 
     let gl = shader.gl;
-    gl.useProgram(shader.glProgram);
+    gl.useProgram(shader.program);
 
     for (let i = 0; i < this.fullBuffers.length; i++) {
       let buffer = this.fullBuffers[i];
       buffer.upload();
-      shader.attributes['vpos'].set3f(buffer.glBuffer, 28, 0);
-      shader.attributes['vcol'].set4f(buffer.glBuffer, 28, 12);
+      //shader.attributes['vpos'].set3f(buffer.glBuffer, 28, 0);
+      //shader.attributes['vcol'].set4f(buffer.glBuffer, 28, 12);
       gl.drawArrays(gl.LINES, 0, buffer.cursor / 7);
     }
 

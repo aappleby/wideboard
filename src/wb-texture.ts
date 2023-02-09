@@ -69,7 +69,7 @@ export class Texture {
 
   load(url : string) {
     let gl = this.gl;
-    let image = new HTMLImageElement();
+    let image = new Image();
     let self = this;
     image.onload = () => {
       self.width = image.width;

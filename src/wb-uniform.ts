@@ -5,7 +5,6 @@ export class Uniform {
   location : WebGLUniformLocation | null;
   parent : Uniform | null;
   value : Array<number>;
-  dirty : boolean;
 
   set : (...args) => void;
   glSet : (...args) => void;
@@ -20,10 +19,10 @@ export class Uniform {
     this.gl = gl;
     this.name = name;
     this.type = type;
-    this.location = opt_location || null;
-    this.parent = opt_parent || null;
-    this.value = opt_parent ? opt_parent.value : new Array(16);
-    this.dirty = false;
+    this.location = opt_location;
+    this.parent = opt_parent;
+    //this.value = (opt_parent !== null) ? opt_parent.value : new Array(16);
+    this.value = new Array(16);
     this.set = () => {};
     this.glSet = () => {};
 
@@ -59,52 +58,54 @@ export class Uniform {
     }
   }
 
+  dump() {
+    console.log("class Uniform " + this.name + ":" + this.type + ":" + this.location);
+  }
+
   glSet1f() {
     if (this.location) {
       this.gl.uniform1f(this.location, this.value[0]);
-      this.dirty = false;
     }
   };
 
   glSet2f() {
     if (this.location) {
       this.gl.uniform2f(this.location, this.value[0], this.value[1]);
-      this.dirty = false;
     }
   };
 
   glSet3f() {
     if (this.location) {
       this.gl.uniform3f(this.location, this.value[0], this.value[1], this.value[2]);
-      this.dirty = false;
     }
   };
 
   glSet4f() {
     if (this.location) {
+      /*
+      if (this.value[0] === undefined) {
+        console.log("glSet4f " + this.location + ":" +  this.value[0] + ":" +  this.value[1] + ":" +  this.value[2] + ":" +  this.value[3]);
+      }
+      */
       this.gl.uniform4f(this.location, this.value[0], this.value[1], this.value[2], this.value[3]);
-      this.dirty = false;
     }
   };
 
   glSet1i() {
     if (this.location) {
       this.gl.uniform1i(this.location, this.value[0]);
-      this.dirty = false;
     }
   };
 
   set1f(x : number) {
     //goog.asserts.assert(arguments.length == 1);
     this.value[0] = x;
-    this.dirty = true;
   };
 
   set2f(x : number, y : number) {
     //goog.asserts.assert(arguments.length == 2);
     this.value[0] = x;
     this.value[1] = y;
-    this.dirty = true;
   };
 
   set3f(x : number, y : number, z : number) {
@@ -112,7 +113,6 @@ export class Uniform {
     this.value[0] = x;
     this.value[1] = y;
     this.value[2] = z;
-    this.dirty = true;
   };
 
   set4f(x : number, y : number, z : number, w : number) {
@@ -121,13 +121,11 @@ export class Uniform {
     this.value[1] = y;
     this.value[2] = z;
     this.value[3] = w;
-    this.dirty = true;
   };
 
   set1i(x : number) {
     //goog.asserts.assert(arguments.length == 1);
     this.value[0] = x;
-    this.dirty = true;
   };
 
 };

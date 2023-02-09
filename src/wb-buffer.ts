@@ -9,12 +9,11 @@ export class Buffer {
   size     : number;
   length   : number;
   indices  : boolean;
-  primType : GLenum;
   data     : Float32Array | null;
   cursor   : number;
   stride   : number;
 
-  constructor(gl : WebGLRenderingContext, buf_name : string, mode : number) {
+  constructor(gl : WebGLRenderingContext, buf_name : string, mode : GLenum) {
     this.gl = gl;
 
     this.buf_name = buf_name;
@@ -25,7 +24,6 @@ export class Buffer {
     this.size = -1;
     this.length = -1;
     this.indices = false;
-    this.primType = -1;
     this.data = null;
     this.cursor = -1;
     this.stride = -1;
@@ -112,20 +110,11 @@ export class Buffer {
   bind() {
     var gl = this.gl;
     if (this.indices) {
-      if (gl['wb_activeIndexBuffer'] != this) {
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.glBuffer);
-        gl['wb_activeIndexBuffer'] = this;
-      }
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.glBuffer);
     } else {
-      if (gl['wb_activeBuffer'] != this) {
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.glBuffer);
-        gl['wb_activeBuffer'] = this;
-      }
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.glBuffer);
     }
-    if (this.uploadedVersion != this.version) {
-      gl.bufferData(gl.ARRAY_BUFFER, this.data, gl.DYNAMIC_DRAW);
-      this.uploadedVersion = this.version;
-    }
+    //gl.bufferData(gl.ARRAY_BUFFER, this.data, gl.DYNAMIC_DRAW);
   };
   */
 };

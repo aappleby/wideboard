@@ -78,7 +78,7 @@ export class View  {
 export function ease(value : number, goal : number, delta : number) {
   if (value == goal) return value;
   var oldValue = value;
-  var t = 1.0 - Math.pow(0.1, delta / 70);
+  var t = 1.0 - Math.pow(0.1, delta / 80);
   value += (goal - value) * t;
   if (value == oldValue) {
     value = goal;
@@ -97,7 +97,7 @@ export function easeRect(value : Rect, goal : Rect, delta : number) {
 
 //--------------------------------------------------------------------------------
 
-export function easeView(view : View, goal : View, delta : number, canvas : HTMLCanvasElement) {
+export function easeView(view : View, goal : View, delta : number, canvas : HTMLCanvasElement) : boolean {
   view.origin.x = ease(view.origin.x, goal.origin.x, delta);
   view.origin.y = ease(view.origin.y, goal.origin.y, delta);
   view.scale = 1.0 / ease(1.0 / view.scale, 1.0 / goal.scale, delta);
@@ -105,19 +105,18 @@ export function easeView(view : View, goal : View, delta : number, canvas : HTML
   // If we're within 3% of the goal scale, and 1/3 a pixel of the goal origin,
   // snap to the goal.
   var ds = view.scale / goal.scale;
-  if ((ds < 0.99) || (ds > 1.01)) return;
-
-  var dx = worldToScreenX(0, view, canvas) -
-           worldToScreenX(0, goal, canvas);
-  var dy = worldToScreenY(0, view, canvas) -
-           worldToScreenY(0, goal, canvas);
-
+  var dx = worldToScreenX(0, view, canvas) - worldToScreenX(0, goal, canvas);
+  var dy = worldToScreenY(0, view, canvas) - worldToScreenY(0, goal, canvas);
   var dist = Math.sqrt(dx * dx + dy * dy);
-  if (dist < 0.33) {
+
+  if ((ds > 0.99) && (ds < 1.01) && (dist < 0.33)) {
     view.origin.x = goal.origin.x;
     view.origin.y = goal.origin.y;
     view.scale = goal.scale;
+    return true;
   }
+
+  return false;
 };
 
 //--------------------------------------------------------------------------------

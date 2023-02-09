@@ -3,7 +3,6 @@ import { View } from "./wb-util.js";
 import * as util from "./wb-util.js";
 
 export class Camera implements DragTarget {
-  gl : WebGLRenderingContext;
   canvas : HTMLCanvasElement;
   oldView : View;
   view : View;
@@ -11,10 +10,9 @@ export class Camera implements DragTarget {
   viewSnap : View;
   viewGoalSnap : View;
 
-  constructor(gl : WebGLRenderingContext) {
-    this.gl = gl;
+  constructor(canvas : HTMLCanvasElement) {
     // @ts-ignore
-    this.canvas = gl.canvas;
+    this.canvas = canvas;
     this.oldView = new View();
     this.view = new View();
     this.viewGoal = new View();
@@ -22,18 +20,27 @@ export class Camera implements DragTarget {
     this.viewGoalSnap = new View();
   }
 
-  update(delta : number /* Time increment, in milliseconds.*/) {
-    util.easeView(this.view, this.viewGoal, delta, this.canvas);
+  update(delta : number) {
+    let ease_done = util.easeView(this.view, this.viewGoal, delta, this.canvas);
+    if (!ease_done) {
+      //console.log("View moved: " + this.view.origin.x + "," + this.view.origin.y);
+    }
     util.easeView(this.viewSnap, this.viewGoalSnap, delta, this.canvas);
   };
 
   onMouseClick(x : number, y : number) {
+    //console.log("Camera::onMouseClick");
   };
 
   onMouseWheel(x : number, y : number, delta : number, shiftKey : boolean, ctrlKey : boolean, altKey : boolean) {
+    //console.log("Camera::onMouseWheel");
     if (shiftKey) {
-      // FIXME - what was this doing?
-      //delta = (delta > 0) - (delta < 0);
+      if (delta > 0) {
+        delta = -1;
+      }
+      else if (delta < 0) {
+        delta = 1;
+      }
 
       var oldZoom = Math.log(this.viewGoal.scale) / Math.log(2);
       var step = 0.5;
@@ -69,12 +76,14 @@ export class Camera implements DragTarget {
   };
 
   onDragBegin(x : number, y : number, shiftKey : boolean, ctrlKey : boolean, altKey : boolean) {
+    //console.log("Camera::onDragBegin");
     if (shiftKey) {
       this.oldView.copy(this.view);
     }
   };
 
   onDragUpdate(dx : number, dy : number, shiftKey : boolean, ctrlKey : boolean, altKey : boolean) {
+    //console.log("Camera::onDragUpdate");
     //this.viewGoal.copy(this.oldView);
     if (shiftKey) {
       this.viewGoal.origin.x -= dx / this.viewGoal.scale;
@@ -86,12 +95,15 @@ export class Camera implements DragTarget {
   };
 
   onDragCancel(x : number, y : number) {
+    //console.log("Camera::onDragCancel");
   };
 
   onDragEnd(x : number, y : number) {
+    //console.log("Camera::onDragEnd");
   };
 
   onKeyDown(key : number, shiftKey : boolean, ctrlKey : boolean, altKey : boolean) {
+    console.log("Camera::onKeyDown");
     if (key == 33) {
       this.viewGoal.origin.y -= 800 / this.viewGoal.scale;
       this.viewGoalSnap.copy(this.viewGoal);
