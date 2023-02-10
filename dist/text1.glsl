@@ -47,6 +47,9 @@ void main(void) {
   p *= vec2(text_cols, iDocPos.z);
   p += iDocPos.xy;
 
+  p.x += 0.5;
+  p.y += 0.5;
+
   //float phase = (iDocPos.x / 10000.0) + 0.31 * (iDocPos.y / 10000.0);
   //p += vec2(sin(ftime + phase), cos(ftime * 1.1 + phase)) * 1000.0 * wavey;
 
@@ -91,15 +94,13 @@ void main(void) {
     }
   }
 
-  float tn10 = 1.0 / 1024.0;
-  float tn11 = 1.0 / 2048.0;
-  float tn12 = 1.0 / 4096.0;
-  float tn13 = 1.0 / 8192.0;
+  float inv_docmap_w = 1.0 / 1024.0;
+  float inv_linemap_w = 1.0 / 4096.0;
 
   // Convert line number + shelf offset to docmap texcoord
   vec2 docmapPos;
-  docmapPos.x = fract((row + shelf_offset) * tn10) + tn11;
-  docmapPos.y = floor((row + shelf_offset) * tn10) * tn10 + tn11;
+  docmapPos.x = fract((row + shelf_offset) * inv_docmap_w)                + inv_docmap_w * 0.5;
+  docmapPos.y = floor((row + shelf_offset) * inv_docmap_w) * inv_docmap_w + inv_docmap_w * 0.5;
 
   // Read line info from docmap.
   vec4 lineInfo = texture2D(docmap, docmapPos);
@@ -120,22 +121,38 @@ void main(void) {
 
   // Wrap the linemap index around the linemap to get the integer linemap position.
   vec2 linePos;
-  linePos.x = fract(lineIndex * tn12) + tn13;
-  linePos.y = floor(lineIndex * tn12) * tn12 + tn13;
+  linePos.x = fract(lineIndex * inv_linemap_w) + inv_linemap_w * 0.5;
+  linePos.y = floor(lineIndex * inv_linemap_w) * inv_linemap_w + inv_linemap_w * 0.5;
 
   // Read the glyph index from the linemap & convert to an integer.
   float glyphIndex = floor(texture2D(linemap, linePos).r * 255.0 + 0.5);
 
   // Wrap glyph index around glyphmap to get integer glyph position.
+  float glyphs_per_row = 32.0;
+  float inv_glyph_per_row = 1.0 / glyphs_per_row;
+  float glyph_w = 6.0;
+  float glyph_h = 14.0;
+  float cell_w = 8.0;
+  float cell_h = 16.0;
+
   vec2 glyphCell;
-  glyphCell.x = fract(glyphIndex * (1.0 / 32.0));
-  glyphCell.y = floor(glyphIndex * (1.0 / 32.0));
+  glyphCell.x = fract(glyphIndex * inv_glyph_per_row);
+  glyphCell.y = floor(glyphIndex * inv_glyph_per_row);
+  float glyphmap_w = 256.0;
+
+  cellPos.x += 0.5 / glyph_w;
+  cellPos.y += 0.5 / glyph_h;
 
   // Combine glyph position with inside-cell position to get sample position in texel coordinates.
-  vec2 glyphLoc = (glyphCell * vec2(32.0 * 8.0 / 256.0, 16.0 / 256.0) + cellPos * vec2(6.0 / 256.0, 14.0 / 256.0));
+  vec2 glyphLoc =
+    glyphCell * vec2(glyphs_per_row * cell_w  / glyphmap_w, cell_h  / glyphmap_w) +
+    cellPos   * vec2(                 glyph_w / glyphmap_w, glyph_h / glyphmap_w);
 
   // Read output color from glyphmap.
   float result = texture2D(glyphmap, glyphLoc).r;
+
+  result = clamp(result * 5.0 - 1.5, 0.0, 1.0);
+
   gl_FragColor = mix(back, foreground, result);
 }
 

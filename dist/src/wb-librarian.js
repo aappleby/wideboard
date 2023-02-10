@@ -110,7 +110,7 @@ export class Librarian {
         // We now have the text blob, the list of line starts, and the list of line lengths.
         // Create a new document and add all the lines we found to it.
         this.shelves[shelfIndex].addDocument2(bytes, lineStarts, lineLengths, this.screenCursorX, this.screenCursorY);
-        this.screenCursorY += lineCount * 14 + 300;
+        this.screenCursorY += 100;
         if (this.screenCursorY > 200000) {
             this.screenCursorY = 0;
             this.screenCursorX += 1280;
