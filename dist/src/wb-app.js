@@ -20,7 +20,6 @@ export class App {
     textShader;
     librarian;
     glyphmap;
-    docbuf;
     square;
     doc_inst;
     pen;
@@ -52,27 +51,6 @@ export class App {
         this.textShader = new Shader(gl, 'text1.glsl');
         this.glyphmap = new Texture(gl, gl.LUMINANCE, 256, 256);
         this.glyphmap.load('terminus.bmp');
-        let doc_verts = [
-            0, 0, 0.2, 0.2, 0.2, 1.0, 0, 0, 22, 0,
-            0, 1, 0.2, 0.2, 0.2, 1.0, 0, 0, 22, 0,
-            1, 1, 0.2, 0.2, 0.2, 1.0, 0, 0, 22, 0,
-            0, 0, 0.2, 0.2, 0.2, 1.0, 0, 0, 22, 0,
-            1, 1, 0.2, 0.2, 0.2, 1.0, 0, 0, 22, 0,
-            1, 0, 0.2, 0.2, 0.2, 1.0, 0, 0, 22, 0,
-            0, 0, 0.2, 0.2, 0.2, 1.0, 0, 320, 22, 22,
-            0, 1, 0.2, 0.2, 0.2, 1.0, 0, 320, 22, 22,
-            1, 1, 0.2, 0.2, 0.2, 1.0, 0, 320, 22, 22,
-            0, 0, 0.2, 0.2, 0.2, 1.0, 0, 320, 22, 22,
-            1, 1, 0.2, 0.2, 0.2, 1.0, 0, 320, 22, 22,
-            1, 0, 0.2, 0.2, 0.2, 1.0, 0, 320, 22, 22,
-            0, 0, 0.2, 0.2, 0.2, 1.0, 0, 640, 22, 44,
-            0, 1, 0.2, 0.2, 0.2, 1.0, 0, 640, 22, 44,
-            1, 1, 0.2, 0.2, 0.2, 1.0, 0, 640, 22, 44,
-            0, 0, 0.2, 0.2, 0.2, 1.0, 0, 640, 22, 44,
-            1, 1, 0.2, 0.2, 0.2, 1.0, 0, 640, 22, 44,
-            1, 0, 0.2, 0.2, 0.2, 1.0, 0, 640, 22, 44,
-        ];
-        this.docbuf = new Buffer(gl, "docbuf", gl.FLOAT, 10, 1024, doc_verts);
         let square_verts = [
             0, 0,
             0, 1,
@@ -82,14 +60,15 @@ export class App {
             1, 0,
         ];
         this.square = new Buffer(gl, "square", gl.FLOAT, 2, 1024, square_verts);
-        let inst_verts = [
-            0.2, 0.2, 0.2, 1.0, 0, 0, 22, 0,
-            0.2, 0.2, 0.2, 1.0, 0, 608, 22, 22,
-            0.2, 0.2, 0.2, 1.0, 0, 1216, 22, 44,
-        ];
-        this.doc_inst = new Buffer(gl, "doc_inst", gl.FLOAT, 8, 1024, inst_verts);
+        let inst_verts = [];
+        for (let x = 0; x < 64; x++) {
+            for (let y = 0; y < 128; y++) {
+                inst_verts = inst_verts.concat([0.2, 0.2, 0.2, 1.0, x * 768, y * 640, 22, (x + y * 64) * 22]);
+            }
+        }
+        this.doc_inst = new Buffer(gl, "doc_inst", gl.FLOAT, 8, 65536, inst_verts);
         this.librarian = new Librarian(gl);
-        for (let i = 0; i < 4000; i++) {
+        for (let i = 0; i < 8192; i++) {
             this.librarian.loadFakeDocument();
         }
         //this.librarian.loadDirectory('linux');
@@ -167,23 +146,45 @@ export class App {
             gl.uniform1f(u_ftime, (this.appStart - performance.now()) / 1000);
             //----------
             // Vertex Buffer
-            gl.bindBuffer(gl.ARRAY_BUFFER, this.docbuf.handle);
             let loc_vpos = gl.getAttribLocation(prog, "vpos");
             let loc_icol = gl.getAttribLocation(prog, "iColor");
             let loc_idoc = gl.getAttribLocation(prog, "iDocPos");
-            if (loc_vpos >= 0)
-                gl.enableVertexAttribArray(loc_vpos);
-            if (loc_icol >= 0)
-                gl.enableVertexAttribArray(loc_icol);
-            if (loc_idoc >= 0)
-                gl.enableVertexAttribArray(loc_idoc);
-            if (loc_vpos >= 0)
-                gl.vertexAttribPointer(loc_vpos, 2, gl.FLOAT, false, 40, 0);
-            if (loc_icol >= 0)
-                gl.vertexAttribPointer(loc_icol, 4, gl.FLOAT, false, 40, 8);
-            if (loc_idoc >= 0)
-                gl.vertexAttribPointer(loc_idoc, 4, gl.FLOAT, false, 40, 24);
+            /*
+      
+            if (loc_vpos >= 0) gl.enableVertexAttribArray(loc_vpos);
+            if (loc_icol >= 0) gl.enableVertexAttribArray(loc_icol);
+            if (loc_idoc >= 0) gl.enableVertexAttribArray(loc_idoc);
+            if (loc_vpos >= 0) gl.vertexAttribPointer(loc_vpos, 2, gl.FLOAT, false, 40,  0);
+            if (loc_icol >= 0) gl.vertexAttribPointer(loc_icol, 4, gl.FLOAT, false, 40,  8);
+            if (loc_idoc >= 0) gl.vertexAttribPointer(loc_idoc, 4, gl.FLOAT, false, 40, 24);
+      
             gl.drawArrays(gl.TRIANGLES, 0, 6 * 3);
+            */
+            let ext = gl.getExtension('ANGLE_instanced_arrays');
+            //console.log(ext);
+            if (loc_vpos >= 0) {
+                gl.bindBuffer(gl.ARRAY_BUFFER, this.square.handle);
+                gl.enableVertexAttribArray(loc_vpos);
+                gl.vertexAttribPointer(loc_vpos, 2, gl.FLOAT, false, 8, 0);
+                ext.vertexAttribDivisorANGLE(loc_vpos, 0);
+            }
+            if (loc_icol >= 0) {
+                gl.bindBuffer(gl.ARRAY_BUFFER, this.doc_inst.handle);
+                gl.enableVertexAttribArray(loc_icol);
+                gl.vertexAttribPointer(loc_icol, 4, gl.FLOAT, false, 32, 0);
+                ext.vertexAttribDivisorANGLE(loc_icol, 1);
+            }
+            if (loc_idoc >= 0) {
+                gl.bindBuffer(gl.ARRAY_BUFFER, this.doc_inst.handle);
+                gl.enableVertexAttribArray(loc_idoc);
+                gl.vertexAttribPointer(loc_idoc, 4, gl.FLOAT, false, 32, 16);
+                ext.vertexAttribDivisorANGLE(loc_idoc, 1);
+            }
+            //gl.drawArrays(gl.TRIANGLES, 0, 6 * 3);
+            ext.drawArraysInstancedANGLE(gl.TRIANGLES, 0, 6, 8192);
+            ext.vertexAttribDivisorANGLE(0, 0);
+            ext.vertexAttribDivisorANGLE(1, 0);
+            ext.vertexAttribDivisorANGLE(2, 0);
         }
     }
     //----------------------------------------
