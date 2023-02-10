@@ -1,33 +1,33 @@
 // Simple immediate-mode debug draw support.
 import { Buffer } from "./wb-buffer.js";
-export class Draw {
+import { Shader } from "./wb-shader.js";
+export class Pen {
     gl;
-    currentBuffer; // The buffer we're currently filling.
-    bufferPool; // Pool of empty buffers.
-    fullBuffers; // List of full buffers.
-    penX; // The pen X position.
-    penY; // The pen Y position.
-    penZ; // The pen Z position.
-    penR; // The pen red component.
-    penG; // The pen green component.
-    penB; // The pen blue component.
-    penA; // The pen alpha component.
-    penPath; // The current pen path.
-    penDown; // Whether the pen is up or down.
+    buf;
+    penX = 0;
+    penY = 0;
+    penZ = 0;
+    penW = 1;
+    penR = 1;
+    penG = 1;
+    penB = 1;
+    penA = 1;
+    shader;
     constructor(gl) {
         this.gl = gl;
-        this.currentBuffer = null;
-        this.bufferPool = [];
-        this.fullBuffers = [];
-        this.penX = -1;
-        this.penY = -1;
-        this.penZ = -1;
+        this.buf = new Buffer(gl, 'debugdraw', gl.FLOAT, 8, 4096);
+        this.shader = new Shader(gl, 'simple.glsl');
+    }
+    reset() {
+        this.buf.cursor = 0;
+        this.penX = 0;
+        this.penY = 0;
+        this.penZ = 0;
+        this.penW = 1;
         this.penR = 1;
         this.penG = 1;
         this.penB = 1;
         this.penA = 1;
-        this.penPath = [];
-        this.penDown = false;
     }
     color(r, g, b, a = 1) {
         this.penR = r;
@@ -36,30 +36,20 @@ export class Draw {
         this.penA = a;
     }
     ;
-    moveTo(x, y, z = 0) {
-        if (this.penDown) {
-            this.flushPath();
-            this.penDown = false;
-        }
-        z = z || 0;
+    moveTo(x, y, z = 0, w = 0) {
         this.penX = x;
         this.penY = y;
         this.penZ = z;
+        this.penW = w;
     }
     ;
-    lineTo(x, y, z = 0) {
-        z = z || 0;
-        this.penPath.push(this.penX);
-        this.penPath.push(this.penY);
-        this.penPath.push(this.penZ);
-        this.penPath.push(this.penR);
-        this.penPath.push(this.penG);
-        this.penPath.push(this.penB);
-        this.penPath.push(this.penA);
+    lineTo(x, y, z = 0, w = 0) {
+        this.pushVert(this.penX, this.penY, this.penZ, this.penW, this.penR, this.penG, this.penB, this.penA);
         this.penX = x;
         this.penY = y;
         this.penZ = z;
-        this.penDown = true;
+        this.penW = w;
+        this.pushVert(this.penX, this.penY, this.penZ, this.penW, this.penR, this.penG, this.penB, this.penA);
     }
     ;
     strokeRect(x1, y1, x2, y2) {
@@ -68,100 +58,41 @@ export class Draw {
         this.lineTo(x2, y2);
         this.lineTo(x1, y2);
         this.lineTo(x1, y1);
-        this.flushPath();
     }
     ;
-    // Ends the current pen path & adds the primitives it generated to the current buffer.
-    flushPath() {
-        if (this.penDown) {
-            this.penPath.push(this.penX);
-            this.penPath.push(this.penY);
-            this.penPath.push(this.penZ);
-            this.penPath.push(this.penR);
-            this.penPath.push(this.penG);
-            this.penPath.push(this.penB);
-            this.penPath.push(this.penA);
-            this.penDown = false;
-        }
-        let path = this.penPath;
-        let count = (path.length / 7) - 1;
-        for (let i = 0; i < count; i++) {
-            let c = i * 7;
-            this.pushSegment(path[c + 0], path[c + 1], path[c + 2], path[c + 3], path[c + 4], path[c + 5], path[c + 6], path[c + 7], path[c + 8], path[c + 9], path[c + 10], path[c + 11], path[c + 12], path[c + 13]);
-        }
-        this.penPath.length = 0;
-    }
-    ;
-    // Adds one line segment to the current buffer.
-    pushSegment(x1, y1, z1, r1, g1, b1, a1, x2, y2, z2, r2, g2, b2, a2) {
-        if (!this.currentBuffer) {
-            this.endBuffer();
-            this.startBuffer(this.gl.LINES);
-        }
-        if (!this.currentBuffer)
+    pushVert(x, y, z, w, r, g, b, a) {
+        let buf = this.buf;
+        if (buf.data.length - buf.cursor < 8)
             return;
-        if ((this.currentBuffer.length - this.currentBuffer.cursor) < 14) {
-            this.endBuffer();
-            this.startBuffer(this.gl.LINES);
-        }
-        let data = this.currentBuffer.data;
-        let cursor = this.currentBuffer.cursor;
-        data[cursor++] = x1;
-        data[cursor++] = y1;
-        data[cursor++] = z1;
-        data[cursor++] = r1;
-        data[cursor++] = g1;
-        data[cursor++] = b1;
-        data[cursor++] = a1;
-        data[cursor++] = x2;
-        data[cursor++] = y2;
-        data[cursor++] = z2;
-        data[cursor++] = r2;
-        data[cursor++] = g2;
-        data[cursor++] = b2;
-        data[cursor++] = a2;
-        this.currentBuffer.cursor = cursor;
+        buf.data[buf.cursor++] = x;
+        buf.data[buf.cursor++] = y;
+        buf.data[buf.cursor++] = z;
+        buf.data[buf.cursor++] = w;
+        buf.data[buf.cursor++] = r;
+        buf.data[buf.cursor++] = g;
+        buf.data[buf.cursor++] = b;
+        buf.data[buf.cursor++] = a;
     }
     ;
-    startBuffer(primitiveType) {
-        let nextBuffer = this.bufferPool.pop();
-        if (!nextBuffer) {
-            nextBuffer = new Buffer(this.gl, 'debugdraw', this.gl.DYNAMIC_DRAW);
-            // Each buffer can hold 4096 vertices.
-            nextBuffer.initDynamic(7, 4096);
-        }
-        this.currentBuffer = nextBuffer;
+    draw(canvas, view) {
+        let gl = this.gl;
+        let buf = this.buf;
+        let prog = this.shader.handle;
+        gl.useProgram(prog);
+        buf.upload();
+        let canvasLeft = -Math.round(canvas.width / 2.0);
+        let canvasTop = -Math.round(canvas.height / 2.0);
+        gl.uniform4f(gl.getUniformLocation(prog, "screenSize"), canvasLeft, canvasTop, 1.0 / canvas.width, 1.0 / canvas.height);
+        gl.uniform4f(gl.getUniformLocation(prog, "modelToWorld"), 0, 0, 1, 1);
+        gl.uniform4f(gl.getUniformLocation(prog, "worldToView"), -view.origin.x, -view.origin.y, view.scale, view.scale);
+        let vpos_loc = gl.getAttribLocation(prog, "vpos");
+        let vcol_loc = gl.getAttribLocation(prog, "vcol");
+        gl.enableVertexAttribArray(vpos_loc);
+        gl.enableVertexAttribArray(vcol_loc);
+        gl.vertexAttribPointer(vpos_loc, 4, gl.FLOAT, false, 32, 0);
+        gl.vertexAttribPointer(vcol_loc, 4, gl.FLOAT, false, 32, 16);
+        gl.drawArrays(gl.LINES, 0, buf.cursor / 8);
     }
-    ;
-    endBuffer() {
-        if (this.currentBuffer) {
-            this.fullBuffers.push(this.currentBuffer);
-            this.currentBuffer = null;
-        }
-    }
-    ;
-    draw(shader) {
-        this.flushPath();
-        if (this.currentBuffer) {
-            this.fullBuffers.push(this.currentBuffer);
-            this.currentBuffer = null;
-        }
-        let gl = shader.gl;
-        gl.useProgram(shader.program);
-        for (let i = 0; i < this.fullBuffers.length; i++) {
-            let buffer = this.fullBuffers[i];
-            buffer.upload();
-            //shader.attributes['vpos'].set3f(buffer.glBuffer, 28, 0);
-            //shader.attributes['vcol'].set4f(buffer.glBuffer, 28, 12);
-            gl.drawArrays(gl.LINES, 0, buffer.cursor / 7);
-        }
-        while (this.fullBuffers.length) {
-            let buffer = this.fullBuffers.pop();
-            buffer.resetCursor();
-            this.bufferPool.push(buffer);
-        }
-    }
-    ;
 }
 ;
 //# sourceMappingURL=wb-draw.js.map

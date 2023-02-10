@@ -2,18 +2,22 @@ import { compile_shader } from "./gl-base.js"
 
 export class Shader  {
   gl : WebGLRenderingContext;
-  filename : string;
-  program : WebGLProgram;
+  name : string;
+  handle : WebGLProgram;
 
-  constructor(gl : WebGLRenderingContext, filename : string) {
+  constructor(gl : WebGLRenderingContext, name : string, text : string = null) {
     this.gl = gl;
-    this.filename = filename;
+    this.name = name;
 
-    let xhr1 = new XMLHttpRequest();
-    xhr1.open('GET', this.filename, false);
-    xhr1.send();
-    let source = xhr1.responseText;
-
-    this.program = compile_shader(gl, filename, source);
+    if (text !== null) {
+      this.handle = compile_shader(gl, name, text);
+    }
+    else {
+      let xhr1 = new XMLHttpRequest();
+      xhr1.open('GET', this.name, false);
+      xhr1.send();
+      let source = xhr1.responseText;
+      this.handle = compile_shader(gl, name, source);
+    }
   }
 };

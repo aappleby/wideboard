@@ -1,120 +1,55 @@
 export class Buffer {
   gl : WebGLRenderingContext;
 
-  buf_name : string;
-  buf_type : number;
-  buf_mode : GLenum;
+  handle     : WebGLBuffer;
+  buf_name   : string;
+  buf_type   : GLenum; // gl.FLOAT or gl.UNSIGNED_BYTE
+  buf_arity  : number;
+  buf_len    : number;
+  data   : Float32Array | Uint8Array;
+  cursor : number;
 
-  glBuffer : WebGLBuffer;
-  size     : number;
-  length   : number;
-  indices  : boolean;
-  data     : Float32Array | null;
-  cursor   : number;
-  stride   : number;
-
-  constructor(gl : WebGLRenderingContext, buf_name : string, mode : GLenum) {
+  constructor(gl : WebGLRenderingContext, buf_name : string, buf_type : GLenum, buf_arity : number, buf_len : number, data : Array<number> | null = null) {
     this.gl = gl;
 
-    this.buf_name = buf_name;
-    this.buf_type = -1;
-    this.buf_mode = mode;
+    this.handle    = gl.createBuffer()!;
+    this.buf_name  = buf_name;
+    this.buf_type  = buf_type;
+    this.buf_arity = buf_arity;
+    this.buf_len   = buf_len;
+    this.cursor    = 0;
 
-    this.glBuffer = gl.createBuffer()!;
-    this.size = -1;
-    this.length = -1;
-    this.indices = false;
-    this.data = null;
-    this.cursor = -1;
-    this.stride = -1;
-  }
+    if (data === null) {
+      this.data  = buf_type == gl.UNSIGNED_BYTE ? new Uint8Array(buf_arity * buf_len) : new Float32Array(buf_arity * buf_len);
+    }
+    else {
+      this.data  = buf_type == gl.UNSIGNED_BYTE ? new Uint8Array(data) : new Float32Array(data);
+    }
 
-  initVec2(data : Array<number>) {
-    var gl = this.gl;
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.glBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data), this.buf_mode);
-    this.buf_type = gl.FLOAT;
-    this.size = 2;
-    this.length = data.length / 2;
-    this.stride = 8;
-  };
-
-  initVec3(data : Array<number>) {
-    var gl = this.gl;
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.glBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data), this.buf_mode);
-    this.buf_type = gl.FLOAT;
-    this.size = 3;
-    this.length = data.length / 3;
-    this.stride = 12;
-  };
-
-
-  initVec4(data : Array<number>) {
-    var gl = this.gl;
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.glBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(data), this.buf_mode);
-    this.buf_type = gl.FLOAT;
-    this.size = 4;
-    this.length = data.length / 4;
-    this.stride = 16;
-  };
-
-  initIndex8(data : Array<number>) {
-    var gl = this.gl;
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.glBuffer);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint8Array(data), this.buf_mode);
-    this.buf_type = gl.UNSIGNED_BYTE;
-    this.size = 1;
-    this.length = data.length;
-    this.indices = true;
-  };
-
-  initDynamic(size : number, capacity : number) {
-    var gl = this.gl;
-    this.data = new Float32Array(size * capacity);
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.glBuffer);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.handle);
     gl.bufferData(gl.ARRAY_BUFFER, this.data, gl.DYNAMIC_DRAW);
-    this.buf_type = gl.FLOAT;
-    this.size = size;
-    this.length = capacity;
-    this.cursor = 0;
-    this.stride = size * 4;
-  };
-
-  resetCursor() {
-    this.cursor = 0;
-  };
+  }
 
   // Re-uploads the whole buffer.
   upload() {
-    var gl = this.gl;
-    gl.bindBuffer(gl.ARRAY_BUFFER, this.glBuffer);
+    let gl = this.gl;
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.handle);
     gl.bufferData(gl.ARRAY_BUFFER, this.data, gl.DYNAMIC_DRAW);
   };
 
+  bind() {
+    let gl = this.gl;
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.handle);
+  }
+
   // Re-uploads only the elements in [begin,end)
   uploadDirty(begin : number, end : number) {
-    if (this.data !== null) {
-      var gl = this.gl;
-      var byteOffset = begin * this.stride;
-      var length = (end - begin) * this.size;
-        var chunk = new Float32Array(this.data.buffer, byteOffset, length);
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.glBuffer);
-      gl.bufferSubData(gl.ARRAY_BUFFER, byteOffset, chunk);
-    }
-  };
+    let gl = this.gl;
+    let byte_begin = begin * this.buf_arity * this.data.BYTES_PER_ELEMENT;
+    let byte_end   = end   * this.buf_arity * this.data.BYTES_PER_ELEMENT;
 
-
-  /*
-  bind() {
-    var gl = this.gl;
-    if (this.indices) {
-      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.glBuffer);
-    } else {
-      gl.bindBuffer(gl.ARRAY_BUFFER, this.glBuffer);
-    }
-    //gl.bufferData(gl.ARRAY_BUFFER, this.data, gl.DYNAMIC_DRAW);
+    var chunk = new Uint8Array(this.data.buffer, byte_begin, byte_end - byte_begin);
+    gl.bindBuffer(gl.ARRAY_BUFFER, this.handle);
+    gl.bufferSubData(gl.ARRAY_BUFFER, byte_begin, chunk);
   };
-  */
 };

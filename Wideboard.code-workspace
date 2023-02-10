@@ -5,6 +5,9 @@
 		}
 	],
 	"settings": {
+		"files.exclude": {
+			"dist/src" : true,
+		},
 		"liveServer.settings.port": 5501
-	}
+	},
 }

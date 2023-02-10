@@ -36,9 +36,9 @@ wideboard.Shelf = function(context, width, height) {
   this.height = height;
 
   /** @type {!wideboard.Texture} */
-  this.texture = new wideboard.Texture(context.getGl(),
-                                       this.width, this.height,
-                                       goog.webgl.RGBA, false);
+  this.docmap = new wideboard.Texture(context.getGl(),
+                                      this.width, this.height,
+                                      goog.webgl.RGBA, false);
 
   /** @type {!Uint32Array} */
   this.buffer = new Uint32Array(this.width * this.height);
@@ -82,16 +82,16 @@ wideboard.Shelf = function(context, width, height) {
  * @return {number}
  */
 wideboard.Shelf.prototype.addDocument = function(linePos, lineLength) {
-  var size = linePos.length;
+  var lineCount = linePos.length;
 
   var pos = this.cursorX + this.cursorY * this.width;
 
-  for (var i = 0; i < size; i++) {
+  for (var i = 0; i < lineCount; i++) {
     this.buffer[pos + i] = (lineLength[i] << 24) | linePos[i];
   }
 
-  this.cursorX = (pos + size) % this.width;
-  this.cursorY = (pos + size - this.cursorX) / this.width;
+  this.cursorX = (pos + lineCount) % this.width;
+  this.cursorY = (pos + lineCount - this.cursorX) / this.width;
 
   return pos;
 };
@@ -182,15 +182,15 @@ wideboard.Shelf.prototype.updateTexture = function() {
   var byteSize = linecount * this.width * 4;
 
   var gl = this.context.getGl();
-  gl.bindTexture(gl.TEXTURE_2D, this.texture.glTexture);
+  gl.bindTexture(gl.TEXTURE_2D, this.docmap.glTexture);
 
   var blob = new Uint8Array(this.buffer.buffer, byteOffset, byteSize);
   gl.texSubImage2D(gl.TEXTURE_2D, 0,
                    0, this.cleanCursorY,
                    this.width, linecount,
-                   this.texture.format, gl.UNSIGNED_BYTE, blob);
+                   this.docmap.format, gl.UNSIGNED_BYTE, blob);
 
-  this.texture.ready = true;
+  this.docmap.ready = true;
   this.cleanCursorX = this.cursorX;
   this.cleanCursorY = this.cursorY;
 };

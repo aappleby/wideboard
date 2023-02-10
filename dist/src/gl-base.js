@@ -19,9 +19,17 @@ export function init_gl(gl) {
     LOG_B("Ext count "); LOG_G("%d\n", ext_count);
     LOG_DEDENT();
     */
+    gl.disable(gl.DEPTH_TEST);
+    gl.disable(gl.CULL_FACE);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    if (gl.getExtension("ANGLE_instanced_arrays") === null) {
+        console.log('Extension ANGLE_instanced_arrays not found');
+    }
 }
 //------------------------------------------------------------------------------
 export function compile_shader(gl, shader_name, src) {
+    console.log("Compiling " + shader_name);
     let vert_src = "#define _VERTEX_\n" +
         "precision highp float;\n" +
         src;
@@ -29,7 +37,8 @@ export function compile_shader(gl, shader_name, src) {
     gl.shaderSource(vshader, vert_src);
     gl.compileShader(vshader);
     if (!gl.getShaderParameter(vshader, gl.COMPILE_STATUS)) {
-        console.log('Fragment shader compile failed');
+        console.log('Vertex shader compile failed');
+        console.log(gl.getShaderInfoLog(vshader));
     }
     let fshader = gl.createShader(gl.FRAGMENT_SHADER);
     gl.shaderSource(fshader, "#define _FRAGMENT_\n" +
@@ -38,6 +47,7 @@ export function compile_shader(gl, shader_name, src) {
     gl.compileShader(fshader);
     if (!gl.getShaderParameter(fshader, gl.COMPILE_STATUS)) {
         console.log('Fragment shader compile failed');
+        console.log(gl.getShaderInfoLog(fshader));
     }
     let program = gl.createProgram();
     gl.attachShader(program, vshader);
@@ -45,9 +55,7 @@ export function compile_shader(gl, shader_name, src) {
     gl.linkProgram(program);
     if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
         console.log('Shader link failed!');
-    }
-    else {
-        console.log('Shader ' + shader_name + ' linked');
+        console.log(gl.getProgramInfoLog(program));
     }
     gl.detachShader(program, vshader);
     gl.detachShader(program, fshader);

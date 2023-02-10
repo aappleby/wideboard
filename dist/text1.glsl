@@ -24,6 +24,8 @@ varying vec2 ftex;
 varying vec4 fcol;
 varying float fShelfPos;
 
+//------------------------------------------------------------------------------
+
 #ifdef _VERTEX_
 
 attribute vec2 vpos;
@@ -35,7 +37,6 @@ attribute vec4 iColor;
 // Z: line count
 // W: shelf position
 attribute vec4 iDocPos;
-//uniform vec4 iDocPos;
 
 void main(void) {
   vec2 p = vpos;
@@ -43,8 +44,8 @@ void main(void) {
   p *= vec2(128.0, iDocPos.z);
   p += iDocPos.xy;
 
-  float phase = (iDocPos.x / 10000.0) + 0.31 * (iDocPos.y / 10000.0);
-  p += vec2(sin(ftime + phase), cos(ftime * 1.1 + phase)) * 1000.0 * wavey;
+  //float phase = (iDocPos.x / 10000.0) + 0.31 * (iDocPos.y / 10000.0);
+  //p += vec2(sin(ftime + phase), cos(ftime * 1.1 + phase)) * 1000.0 * wavey;
 
   p += worldToView.xy;
   p *= worldToView.zw;
@@ -57,12 +58,16 @@ void main(void) {
 
   ftex = vpos * vec2(128.0, iDocPos.z);
   fcol = iColor;
-  float blah = sin(ftime + phase) * -0.2 + 0.2;
-  fcol += vec4(blah, blah, blah, 0.0) * wavey;
+  //float blah = sin(ftime + phase) * -0.2 + 0.2;
+  //fcol += vec4(blah, blah, blah, 0.0) * wavey;
   fShelfPos = iDocPos.w;
 }
 
-#else
+#endif
+
+//------------------------------------------------------------------------------
+
+#ifdef _FRAGMENT_
 
 void main(void) {
   float glyphsPerRow = glyphmapSize.x / cellSize.x;
@@ -103,7 +108,7 @@ void main(void) {
 
   // We're inside the line. Add the line start index to the doc X coordinate to get the integer linemap
   // index.
-  
+
   float lineIndex = startIndex + docPos.x;
 
   // Wrap the linemap index around the linemap to get the integer linemap position.
@@ -121,7 +126,7 @@ void main(void) {
 
   // Combine glyph position with inside-cell position to get sample position in texel coordinates.
   vec2 glyphLoc = glyphCell * cellSize + cellPos * glyphSize + vec2(0.0, 2.0);
-  
+
   // Read output color from glyphmap.
   float result = texture2D(glyphmap, glyphLoc / glyphmapSize).r;
 
@@ -131,3 +136,5 @@ void main(void) {
 }
 
 #endif
+
+//------------------------------------------------------------------------------

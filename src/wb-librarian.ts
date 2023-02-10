@@ -2,17 +2,42 @@
 // splitting the chunks into lines, and storing the various bits of data
 // in the linemaps and docmaps.
 
-import { Context } from "./wb-context.js"
+import { compile_shader } from "./gl-base.js";
 import { Document } from "./wb-document.js"
 import { Linemap } from "./wb-linemap.js"
 import { Scrap } from "./wb-scrap.js"
+import { Shader } from "./wb-shader.js";
 import { Shelf } from "./wb-shelf.js"
+
+const fake_document : string = String.raw`A graphics processing unit (GPU) is a specialized electronic circuit designed to
+manipulate and alter memory to accelerate the creation of images in a frame
+buffer intended for output to a display device. GPUs are used in embedded
+systems, mobile phones, personal computers, workstations, and game consoles.
+
+Modern GPUs are efficient at manipulating computer graphics and image
+processing. Their parallel structure makes them more efficient than general-
+purpose central processing units (CPUs) for algorithms that process large blocks
+of data in parallel. In a personal computer, a GPU can be present on a video
+card or embedded on the motherboard. In some CPUs, they are embedded on the CPU
+die.[1]
+
+In the 1970s, the term "GPU" originally stood for graphics processor unit and
+described a programmable processing unit independently working from the CPU and
+responsible for graphics manipulation and output.[2][3] Later, in 1994, Sony
+used the term (now standing for graphics processing unit) in reference to the
+PlayStation console's Toshiba-designed Sony GPU in 1994.[4] The term was
+popularized by Nvidia in 1999, who marketed the GeForce 256 as "the world's
+first GPU".[5] It was presented as a "single-chip processor with integrated
+transform, lighting, triangle setup/clipping, and rendering engines".[6] Rival
+ATI Technologies coined the term "visual processing unit" or VPU with the
+release of the Radeon 9700 in 2002.[7]
+`;
 
 let totalLines = 0;
 let totalFiles = 0;
 
 export class Librarian {
-  context : Context;
+  gl : WebGLRenderingContext;
   screenCursorX : number;
   screenCursorY : number;
   shelves : Array<Shelf>;
@@ -21,12 +46,12 @@ export class Librarian {
   docQueue : Array<string>;
   inFlight : number;
 
-  constructor(context : Context) {
-    this.context = context;
+  constructor(gl : WebGLRenderingContext) {
+    this.gl = gl;
     this.screenCursorX = 0;
     this.screenCursorY = 0;
     this.shelves = [];
-    this.shelves.push(new Shelf(context, 1024, 1024));
+    this.shelves.push(new Shelf(gl, 1024, 1024));
     this.documentsRequested = 0;
     this.dirQueue = [];
     this.docQueue = [];
@@ -48,6 +73,15 @@ export class Librarian {
       }
     }
   };
+
+  loadFakeDocument() {
+    this.inFlight++;
+    let blob = new Uint8Array(fake_document.length);
+    for (let i = 0; i < blob.length; i++) {
+      blob[i] = fake_document.charCodeAt(i);
+    }
+    this.onDocumentLoad("fake_document.txt", blob);
+  }
 
   onDocumentLoad(filename : string, bytes : Uint8Array) {
     this.inFlight--;
@@ -88,7 +122,7 @@ export class Librarian {
 
     let linemap = this.shelves[shelfIndex].linemap;
     if (linemap.cursorY > 3800) {
-      this.shelves.push(new Shelf(this.context, 1024, 1024));
+      this.shelves.push(new Shelf(this.gl, 1024, 1024));
       shelfIndex = this.shelves.length - 1;
     }
 

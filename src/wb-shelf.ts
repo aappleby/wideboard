@@ -4,16 +4,15 @@
 
 import { Buffer } from "./wb-buffer.js"
 import { Texture } from "./wb-texture.js"
-import { Context } from "./wb-context.js"
 import { Document } from "./wb-document.js"
 import { Linemap } from "./wb-linemap.js"
 
 let globalShelfIndex = 0;
 
 export class Shelf {
+  gl : WebGLRenderingContext;
   shelfIndex : number;
   documents : Array<Document>;
-  context : Context;
   width : number;
   height : number;
   texture : Texture;
@@ -30,25 +29,24 @@ export class Shelf {
 
   //----------------------------------------
 
-  constructor(context : Context, width : number, height : number) {
-    let gl = context.getGl();
+  constructor(gl : WebGLRenderingContext, width : number, height : number) {
 
     this.shelfIndex = globalShelfIndex++;
     this.documents = [];
-    this.context = context;
+    this.gl = gl;
     this.width = width;
     this.height = height;
-    this.texture = new Texture(gl, width, height, gl.RGBA, false);
+    this.texture = new Texture(gl, gl.RGBA, width, height);
     this.buffer = new Uint32Array(width * height);
     this.cursorX = 0;
     this.cursorY = 0;
     this.cleanCursorX = 0;
     this.cleanCursorY = 0;
-    this.linemap = new Linemap(context, 4096, 4096);
-    this.docPosBuffer = new Buffer(gl, 'iDocPos', gl.DYNAMIC_DRAW);
-    this.docPosBuffer.initDynamic(4, 65536);
-    this.docColorBuffer = new Buffer(gl, 'iDocColor', gl.DYNAMIC_DRAW);
-    this.docColorBuffer.initDynamic(4, 65536);
+    this.linemap = new Linemap(gl, 4096, 4096);
+
+    this.docPosBuffer   = new Buffer(gl, 'iDocPos',   gl.FLOAT, 4, 65536);
+    this.docColorBuffer = new Buffer(gl, 'iDocColor', gl.FLOAT, 4, 65536);
+
     this.tempBuffer = new Uint8Array(1024);
   }
 
@@ -85,10 +83,9 @@ export class Shelf {
       if (this.tempBuffer.length < length * 2) {
         this.tempBuffer = new Uint8Array(length * 2);
       }
-      let cursor1 = 0;
       let cursor2 = 0;
 
-      for (let cursor1 = 0, cursor2 = 0; cursor1 < length; cursor1++) {
+      for (let cursor1 = 0; cursor1 < length; cursor1++) {
         let c = bytes[start + cursor1];
         if (c == 9) {
           this.tempBuffer[cursor2++] = 32;
@@ -137,6 +134,8 @@ export class Shelf {
   // GPU, but for now it's easier to flush the whole thing.
 
   updateTexture() {
+    let gl = this.gl;
+
     if ((this.cursorX == this.cleanCursorX) &&
         (this.cursorY == this.cleanCursorY)) {
       return;
@@ -147,8 +146,7 @@ export class Shelf {
     let byteOffset = this.cleanCursorY * this.width * 4;
     let byteSize = linecount * this.width * 4;
 
-    let gl = this.context.getGl();
-    gl.bindTexture(gl.TEXTURE_2D, this.texture.glTexture);
+    gl.bindTexture(gl.TEXTURE_2D, this.texture.handle);
 
     let blob = new Uint8Array(this.buffer.buffer, byteOffset, byteSize);
     gl.texSubImage2D(gl.TEXTURE_2D, 0,

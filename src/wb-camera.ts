@@ -47,7 +47,7 @@ export class Camera implements DragTarget {
       oldZoom = Math.round(oldZoom / step) * step;
       var newZoom = oldZoom + delta * step;
       if (newZoom < -10) newZoom = -10;
-      if (newZoom > 2) newZoom = 2;
+      if (newZoom > 4) newZoom = 4;
       var newDelta = newZoom - oldZoom;
 
       // Convert from screen space to graph space.

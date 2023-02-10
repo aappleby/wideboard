@@ -3,7 +3,7 @@ import { Texture } from "./wb-texture.js";
 // The linemap is a dynamically-allocated texture atlas that stores the actual
 // text characters for each line.
 export class Linemap {
-    context;
+    gl;
     width;
     height;
     texture;
@@ -14,12 +14,11 @@ export class Linemap {
     cleanCursorY;
     dirty;
     bitvec;
-    constructor(context, width, height) {
-        var gl = context.getGl();
-        this.context = context;
+    constructor(gl, width, height) {
+        this.gl = gl;
         this.width = width;
         this.height = height;
-        this.texture = new Texture(gl, 2048, 2048, gl.LUMINANCE, false);
+        this.texture = new Texture(gl, gl.LUMINANCE, 2048, 2048);
         this.buffer = new Uint8Array(width * height);
         this.cursorX = 0;
         this.cursorY = 0;
@@ -27,7 +26,7 @@ export class Linemap {
         this.cleanCursorY = 0;
         this.dirty = true;
         this.bitvec = new Bitvec(width * height);
-        gl.bindTexture(gl.TEXTURE_2D, this.texture.glTexture);
+        gl.bindTexture(gl.TEXTURE_2D, this.texture.handle);
         gl.texImage2D(gl.TEXTURE_2D, 0, this.texture.format, this.width, this.height, 0, this.texture.format, gl.UNSIGNED_BYTE, null);
     }
     allocate(size) {
@@ -51,6 +50,7 @@ export class Linemap {
     // TODO(aappleby): This should flush only dirty chunks of the linemap to the
     // GPU, but for now it's easier to flush the whole thing.
     updateTexture() {
+        var gl = this.gl;
         if ((this.cursorX == this.cleanCursorX) &&
             (this.cursorY == this.cleanCursorY)) {
             return;
@@ -58,8 +58,7 @@ export class Linemap {
         var linecount = (this.cursorY - this.cleanCursorY + 1);
         var byteOffset = this.cleanCursorY * this.width;
         var byteSize = linecount * this.width;
-        var gl = this.context.getGl();
-        gl.bindTexture(gl.TEXTURE_2D, this.texture.glTexture);
+        gl.bindTexture(gl.TEXTURE_2D, this.texture.handle);
         var blob = new Uint8Array(this.buffer.buffer, byteOffset, byteSize);
         gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, this.cleanCursorY, this.width, linecount, this.texture.format, gl.UNSIGNED_BYTE, blob);
         this.texture.ready = true;
