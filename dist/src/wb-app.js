@@ -1,3 +1,4 @@
+import { Buffer } from "./wb-buffer.js";
 import { Camera } from "./wb-camera.js";
 import { Controls } from "./wb-controls.js";
 import { Pen } from "./wb-draw.js";
@@ -14,11 +15,14 @@ export class App {
     controls;
     frameCallback;
     frameCounter = 0;
+    appStart = performance.now();
     lastFrameTime = performance.now();
     textShader;
     librarian;
     glyphmap;
     docbuf;
+    square;
+    doc_inst;
     pen;
     blitter;
     //----------------------------------------
@@ -48,11 +52,49 @@ export class App {
         this.textShader = new Shader(gl, 'text1.glsl');
         this.glyphmap = new Texture(gl, gl.LUMINANCE, 256, 256);
         this.glyphmap.load('terminus.bmp');
+        let doc_verts = [
+            0, 0, 0.2, 0.2, 0.2, 1.0, 0, 0, 22, 0,
+            0, 1, 0.2, 0.2, 0.2, 1.0, 0, 0, 22, 0,
+            1, 1, 0.2, 0.2, 0.2, 1.0, 0, 0, 22, 0,
+            0, 0, 0.2, 0.2, 0.2, 1.0, 0, 0, 22, 0,
+            1, 1, 0.2, 0.2, 0.2, 1.0, 0, 0, 22, 0,
+            1, 0, 0.2, 0.2, 0.2, 1.0, 0, 0, 22, 0,
+            0, 0, 0.2, 0.2, 0.2, 1.0, 0, 608, 22, 22,
+            0, 1, 0.2, 0.2, 0.2, 1.0, 0, 608, 22, 22,
+            1, 1, 0.2, 0.2, 0.2, 1.0, 0, 608, 22, 22,
+            0, 0, 0.2, 0.2, 0.2, 1.0, 0, 608, 22, 22,
+            1, 1, 0.2, 0.2, 0.2, 1.0, 0, 608, 22, 22,
+            1, 0, 0.2, 0.2, 0.2, 1.0, 0, 608, 22, 22,
+            0, 0, 0.2, 0.2, 0.2, 1.0, 0, 1216, 22, 44,
+            0, 1, 0.2, 0.2, 0.2, 1.0, 0, 1216, 22, 44,
+            1, 1, 0.2, 0.2, 0.2, 1.0, 0, 1216, 22, 44,
+            0, 0, 0.2, 0.2, 0.2, 1.0, 0, 1216, 22, 44,
+            1, 1, 0.2, 0.2, 0.2, 1.0, 0, 1216, 22, 44,
+            1, 0, 0.2, 0.2, 0.2, 1.0, 0, 1216, 22, 44,
+        ];
+        this.docbuf = new Buffer(gl, "docbuf", gl.FLOAT, 10, 1024, doc_verts);
+        let square_verts = [
+            0, 0,
+            0, 1,
+            1, 1,
+            0, 0,
+            1, 1,
+            1, 0,
+        ];
+        this.square = new Buffer(gl, "square", gl.FLOAT, 2, 1024, square_verts);
+        let inst_verts = [
+            0.2, 0.2, 0.2, 1.0, 0, 0, 22, 0,
+            0.2, 0.2, 0.2, 1.0, 0, 608, 22, 22,
+            0.2, 0.2, 0.2, 1.0, 0, 1216, 22, 44,
+        ];
+        this.doc_inst = new Buffer(gl, "doc_inst", gl.FLOAT, 8, 1024, inst_verts);
         this.librarian = new Librarian(gl);
-        for (let i = 0; i < 100; i++) {
+        for (let i = 0; i < 4000; i++) {
             this.librarian.loadFakeDocument();
         }
         //this.librarian.loadDirectory('linux');
+        let shelf = this.librarian.shelves[0];
+        console.log(shelf);
         console.log("App::constructor() done");
     }
     //----------------------------------------
@@ -79,57 +121,70 @@ export class App {
         }
         let shelf = this.librarian.shelves[0];
         let linemap = shelf.linemap;
-        this.blitter.draw(canvas, view, linemap.texture.handle, 0, -256, 256, 256);
-        this.blitter.draw(canvas, view, shelf.texture.handle, 256, -256, 256, 256);
-        this.blitter.draw(canvas, view, this.glyphmap.handle, 512, -256, 256, 256);
-        /*
-        let shader = this.textShader;
-        let cursor = Math.floor(performance.now() / 30) % 5000;
-    
-        gl.useProgram(shader.program);
-    
-        gl.uniform1i(u_docmap,   0);
-        gl.uniform1i(u_linemap,  1);
-        gl.uniform1i(u_glyphmap, 2);
-    
-        gl.uniform2f(u_glyphmapSize, this.glyphmap.width, this.glyphmap.height);
-        gl.uniform2f(u_glyphSize,    6, 14);
-        gl.uniform2f(u_cellSize,     8, 16);
-        gl.uniform2f(u_cursor,       cursor % 80, Math.floor(cursor / 80));
-        gl.uniform4f(u_background,   0, 0, 0.2, 1);
-        gl.uniform4f(u_foreground,   0.9, 0.9, 0.9, 1);
-        gl.uniform1f(u_wavey,        0);
-        gl.uniform1f(u_ftime,        (this.appStart - performance.now()) / 1000);
-    
-        shader.attributes['vpos'].set2f(this.posBuffer.glBuffer, 8, 0);
-        shader.attributes['vtex'].set2f(this.texBuffer.glBuffer, 8, 0);
-    
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer.glBuffer);
-    
-    
-    
-        let s = Math.sin(performance.now() / 100) * 0.02;
-        gl.uniform4f(u_lineHighlight, 0.15 + s, 0.15 + s, 0.15 + s, 0.0);
-    
-        for (let i = 0; i < this.librarian.shelves.length; i++) {
-          let shelf = this.librarian.shelves[i];
-          //shader.attributes['iColor'].set4f(shelf.docColorBuffer.glBuffer, 16, 0, true);
-          //shader.attributes['iDocPos'].set4f(shelf.docPosBuffer.glBuffer, 16, 0, true);
-    
-          gl.activeTexture(gl.TEXTURE0);
-          gl.bindTexture(gl.TEXTURE_2D, shelf.texture.glTexture);
-          gl.activeTexture(gl.TEXTURE1);
-          gl.bindTexture(gl.TEXTURE_2D, shelf.linemap.texture.glTexture);
-          gl.activeTexture(gl.TEXTURE2);
-          gl.bindTexture(gl.TEXTURE_2D, this.glyphmap.glTexture);
-    
-          gl.uniform2f(u_docmapSize, shelf.width, shelf.height);
-          gl.uniform2f(u_linemapSize, shelf.linemap.width, shelf.linemap.height);
-    
-          // @ts-ignore
-          gl.drawElementsInstancedANGLE(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, 0, shelf.documents.length);
+        this.blitter.draw(canvas, view, linemap.texture.handle, 0, -256 - 16, 256, 256);
+        this.blitter.draw(canvas, view, shelf.texture.handle, 256 + 16, -256 - 16, 256, 256);
+        this.blitter.draw(canvas, view, this.glyphmap.handle, 512 + 32, -256 - 16, 256, 256);
+        {
+            let shader = this.textShader;
+            let prog = shader.handle;
+            let cursor = Math.floor(performance.now() / 30) % 5000;
+            gl.useProgram(prog);
+            let shelf = this.librarian.shelves[0];
+            //----------
+            // Textures
+            gl.activeTexture(gl.TEXTURE0);
+            gl.bindTexture(gl.TEXTURE_2D, shelf.texture.handle);
+            gl.activeTexture(gl.TEXTURE1);
+            gl.bindTexture(gl.TEXTURE_2D, shelf.linemap.texture.handle);
+            gl.activeTexture(gl.TEXTURE2);
+            gl.bindTexture(gl.TEXTURE_2D, this.glyphmap.handle);
+            //----------
+            // Uniforms
+            let u_worldToView = gl.getUniformLocation(prog, "worldToView");
+            let u_screenSize = gl.getUniformLocation(prog, "screenSize");
+            let canvasLeft = -Math.round(canvas.width / 2.0);
+            let canvasTop = -Math.round(canvas.height / 2.0);
+            gl.uniform4f(u_screenSize, canvasLeft, canvasTop, 1.0 / canvas.width, 1.0 / canvas.height);
+            gl.uniform4f(u_worldToView, -view.origin.x, -view.origin.y, view.scale, view.scale);
+            let u_docmap = gl.getUniformLocation(prog, "docmap");
+            let u_linemap = gl.getUniformLocation(prog, "linemap");
+            let u_glyphmap = gl.getUniformLocation(prog, "glyphmap");
+            gl.uniform1i(u_docmap, 0);
+            gl.uniform1i(u_linemap, 1);
+            gl.uniform1i(u_glyphmap, 2);
+            let u_background = gl.getUniformLocation(prog, "background");
+            let u_foreground = gl.getUniformLocation(prog, "foreground");
+            let u_lineHighlight = gl.getUniformLocation(prog, "lineHighlight");
+            let u_cursor = gl.getUniformLocation(prog, "cursor");
+            let u_wavey = gl.getUniformLocation(prog, "wavey");
+            let u_ftime = gl.getUniformLocation(prog, "ftime");
+            let s = Math.sin(performance.now() / 100) * 0.02;
+            gl.uniform4f(u_background, 0, 0, 0.2, 1);
+            gl.uniform4f(u_foreground, 0.9, 0.9, 0.9, 1);
+            gl.uniform4f(u_lineHighlight, 0.15 + s, 0.15 + s, 0.15 + s, 0.0);
+            gl.uniform2f(u_cursor, cursor % 80, Math.floor(cursor / 80));
+            gl.uniform1f(u_wavey, 0);
+            gl.uniform1f(u_ftime, (this.appStart - performance.now()) / 1000);
+            //----------
+            // Vertex Buffer
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.docbuf.handle);
+            let loc_vpos = gl.getAttribLocation(prog, "vpos");
+            let loc_icol = gl.getAttribLocation(prog, "iColor");
+            let loc_idoc = gl.getAttribLocation(prog, "iDocPos");
+            if (loc_vpos >= 0)
+                gl.enableVertexAttribArray(loc_vpos);
+            if (loc_icol >= 0)
+                gl.enableVertexAttribArray(loc_icol);
+            if (loc_idoc >= 0)
+                gl.enableVertexAttribArray(loc_idoc);
+            if (loc_vpos >= 0)
+                gl.vertexAttribPointer(loc_vpos, 2, gl.FLOAT, false, 40, 0);
+            if (loc_icol >= 0)
+                gl.vertexAttribPointer(loc_icol, 4, gl.FLOAT, false, 40, 8);
+            if (loc_idoc >= 0)
+                gl.vertexAttribPointer(loc_idoc, 4, gl.FLOAT, false, 40, 24);
+            gl.drawArrays(gl.TRIANGLES, 0, 6 * 3);
         }
-        */
     }
     //----------------------------------------
     // requestAnimationFrame callback.
