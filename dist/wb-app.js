@@ -180,6 +180,7 @@ export class App {
         let err = this.gl.getError();
         if (err) {
             console.log("GL error: " + err);
+            debugger;
         }
         window.requestAnimationFrame(this.frameCallback);
     }
