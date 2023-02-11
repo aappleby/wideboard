@@ -74,6 +74,7 @@ export class Librarian {
         this.onDocumentLoad("fake_document.txt", blob);
     }
     onDocumentLoad(filename, bytes) {
+        //console.log("onDocumentLoad(" + filename + ")");
         this.inFlight--;
         totalFiles++;
         let cursor = 0;
@@ -110,7 +111,7 @@ export class Librarian {
         // We now have the text blob, the list of line starts, and the list of line lengths.
         // Create a new document and add all the lines we found to it.
         this.shelves[shelfIndex].addDocument2(bytes, lineStarts, lineLengths, this.screenCursorX, this.screenCursorY);
-        this.screenCursorY += 100;
+        this.screenCursorY += lineCount * 14 + 300;
         if (this.screenCursorY > 200000) {
             this.screenCursorY = 0;
             this.screenCursorX += 1280;
@@ -118,25 +119,65 @@ export class Librarian {
         this.loadNext();
     }
     ;
-    onDirectoryLoad(path, files) {
+    onDirectoryLoad(path, response, url) {
+        this.inFlight--;
+        //console.log(path);
+        //console.log(url);
+        //console.log(response);
+        let re = /<a href="(.*?)">/g;
+        let matches = [...response.matchAll(re)];
+        //console.log(matches);
+        let file_filter = /href="[a-zA-Z].*?\.(h|hpp|c|cc|cpp|sh)"/g;
+        let dir_filter = /href="[a-zA-Z].*?\/"/g;
+        for (let match of matches) {
+            let text = match[0];
+            let href = match[1];
+            if (text.match(file_filter)) {
+                //console.log("File: " + path + href);
+                this.docQueue.push(path + href);
+            }
+            else if (text.match(dir_filter)) {
+                //console.log("Dir: " + path + href);
+                this.dirQueue.push(path + href);
+            }
+            else {
+                //console.log("Link: " + text);
+            }
+            /*
+            if (text.includes("icon-directory")) {
+              //console.log(text);
+              let dir_match = text.match(/href="(.*?)"/);
+              if (dir_match && dir_match[1].length > 1) {
+                console.log("Dir: " + dir_match[1]);
+              }
+            }
+            */
+            //console.log(match[0]);
+        }
+        /*
+        let files : Array<Object> = JSON.parse(response);
         this.inFlight--;
         //console.log(path);
         //console.log(files);
+    
         if (path.length && path[path.length - 1] == '/') {
-            path = path.substring(0, path.length - 1);
+          path = path.substring(0, path.length - 1);
         }
+    
         for (let i = 0; i < files.length; i++) {
-            let file = files[i];
-            // @ts-ignore
-            let newpath = path.length ? path + '/' + file.name : file.name;
-            // @ts-ignore
-            if (file.dir) {
-                this.dirQueue.push(newpath);
-            }
-            else {
-                this.docQueue.push(newpath);
-            }
+          let file = files[i];
+    
+          // @ts-ignore
+          let newpath = path.length ? path + '/' + file.name : file.name;
+    
+          // @ts-ignore
+          if (file.dir) {
+            this.dirQueue.push(newpath);
+          } else {
+            this.docQueue.push(newpath);
+          }
         }
+        */
         this.loadNext();
     }
     ;
@@ -159,8 +200,8 @@ export class Librarian {
         xhr.open('GET', path);
         let self = this;
         xhr.onload = () => {
-            let response = JSON.parse(xhr.response);
-            self.onDirectoryLoad(path, response);
+            //console.log(xhr);
+            self.onDirectoryLoad(path, xhr.response, xhr.responseURL);
         };
         xhr.send();
         this.inFlight++;

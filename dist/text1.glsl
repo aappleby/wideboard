@@ -39,7 +39,7 @@ attribute vec4 iColor;
 attribute vec4 iDocPos;
 
 void main(void) {
-  float text_cols = 85.0;
+  float text_cols = 128.0;
   vec2 glyphSize = vec2(6.0, 14.0);
 
   vec2 p = vpos;

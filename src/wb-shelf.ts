@@ -23,8 +23,9 @@ export class Shelf {
   cleanCursorY : number;
   linemap : Linemap;
 
-  docPosBuffer : Buffer; // Document position buffer, can hold 65k documents.
-  docColorBuffer : Buffer;
+  //docPosBuffer : Buffer; // Document position buffer, can hold 65k documents.
+  //docColorBuffer : Buffer;
+  docBuffer : Buffer;
   tempBuffer : Uint8Array;
 
   //----------------------------------------
@@ -44,8 +45,10 @@ export class Shelf {
     this.cleanCursorY = 0;
     this.linemap = new Linemap(gl, 4096, 4096);
 
-    this.docPosBuffer   = new Buffer(gl, 'iDocPos',   gl.FLOAT, 4, 65536);
-    this.docColorBuffer = new Buffer(gl, 'iDocColor', gl.FLOAT, 4, 65536);
+    //this.docPosBuffer   = new Buffer(gl, 'iDocPos',   gl.FLOAT, 4, 65536);
+    //this.docColorBuffer = new Buffer(gl, 'iDocColor', gl.FLOAT, 4, 65536);
+
+    this.docBuffer = new Buffer(gl, 'doc', gl.FLOAT, 8, 65536);
 
     this.tempBuffer = new Uint8Array(1024);
   }
@@ -113,20 +116,19 @@ export class Shelf {
     document.screenX = screenX;
     document.screenY = screenY;
 
-    this.docPosBuffer.data![document.shelfIndex * 4 + 0] = document.screenX;
-    this.docPosBuffer.data![document.shelfIndex * 4 + 1] = document.screenY;
-    this.docPosBuffer.data![document.shelfIndex * 4 + 2] = lineCount;
-    this.docPosBuffer.data![document.shelfIndex * 4 + 3] = document.shelfPos;
-
-    this.docColorBuffer.data![document.shelfIndex * 4 + 0] = (document.shelfIndex * 0.01) % 0.2;
-    this.docColorBuffer.data![document.shelfIndex * 4 + 1] = (document.shelfIndex * 0.007) % 0.2;
-    this.docColorBuffer.data![document.shelfIndex * 4 + 2] = 0.2;
-    this.docColorBuffer.data![document.shelfIndex * 4 + 3] = 1.0;
+    let cursor = document.shelfIndex * 8;
+    this.docBuffer.data![cursor++] = (document.shelfIndex * 0.01) % 0.2;
+    this.docBuffer.data![cursor++] = (document.shelfIndex * 0.007) % 0.2;
+    this.docBuffer.data![cursor++] = 0.2;
+    this.docBuffer.data![cursor++] = 1.0;
+    this.docBuffer.data![cursor++] = document.screenX;
+    this.docBuffer.data![cursor++] = document.screenY;
+    this.docBuffer.data![cursor++] = lineCount;
+    this.docBuffer.data![cursor++] = document.shelfPos;
+    this.docBuffer.uploadDirty(document.shelfIndex, document.shelfIndex + 1);
 
     this.updateTexture();
     this.linemap.updateTexture();
-    this.docPosBuffer.uploadDirty(document.shelfIndex, document.shelfIndex + 1);
-    this.docColorBuffer.uploadDirty(document.shelfIndex, document.shelfIndex + 1);
   }
 
   //----------------------------------------

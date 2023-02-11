@@ -24,8 +24,8 @@ export class App {
     doc_inst;
     pen;
     blitter;
-    grid_x = 4;
-    grid_y = 4;
+    grid_x = 16;
+    grid_y = 16;
     //----------------------------------------
     constructor(canvasElementId) {
         console.log("App::constructor()");
@@ -65,15 +65,25 @@ export class App {
         let inst_verts = [];
         for (let x = 0; x < this.grid_x; x++) {
             for (let y = 0; y < this.grid_y; y++) {
-                inst_verts = inst_verts.concat([0.2, 0.2, 0.2, 1.0, x * 768, y * 640, 22, (x + y * this.grid_x) * 22]);
+                inst_verts = inst_verts.concat([
+                    0.2, 0.2, 0.2, 1.0,
+                    x * 768, y * 640,
+                    22,
+                    //4038,
+                    (x + y * this.grid_x) * 22
+                ]);
             }
         }
         this.doc_inst = new Buffer(gl, "doc_inst", gl.FLOAT, 8, 65536, inst_verts);
         this.librarian = new Librarian(gl);
+        /*
         for (let i = 0; i < this.grid_x * this.grid_y; i++) {
-            this.librarian.loadFakeDocument();
+          this.librarian.loadFakeDocument();
         }
-        //this.librarian.loadDirectory('linux');
+        */
+        //this.librarian.loadDirectory('../docs');
+        //this.librarian.loadDocument("../Metron/src/MtCursor.cpp");
+        this.librarian.loadDirectory("../Metron/");
         let shelf = this.librarian.shelves[0];
         console.log(shelf);
         console.log("App::constructor() done");
@@ -164,6 +174,8 @@ export class App {
             */
             let ext = gl.getExtension('ANGLE_instanced_arrays');
             //console.log(ext);
+            //gl.bindBuffer(gl.ARRAY_BUFFER, shelf.docBuffer.handle);
+            //gl.bufferData(gl.ARRAY_BUFFER, shelf.docBuffer.data, gl.DYNAMIC_DRAW);
             if (loc_vpos >= 0) {
                 gl.bindBuffer(gl.ARRAY_BUFFER, this.square.handle);
                 gl.enableVertexAttribArray(loc_vpos);
@@ -171,19 +183,23 @@ export class App {
                 ext.vertexAttribDivisorANGLE(loc_vpos, 0);
             }
             if (loc_icol >= 0) {
-                gl.bindBuffer(gl.ARRAY_BUFFER, this.doc_inst.handle);
+                //gl.bindBuffer(gl.ARRAY_BUFFER, this.doc_inst.handle);
+                gl.bindBuffer(gl.ARRAY_BUFFER, shelf.docBuffer.handle);
                 gl.enableVertexAttribArray(loc_icol);
                 gl.vertexAttribPointer(loc_icol, 4, gl.FLOAT, false, 32, 0);
                 ext.vertexAttribDivisorANGLE(loc_icol, 1);
             }
             if (loc_idoc >= 0) {
-                gl.bindBuffer(gl.ARRAY_BUFFER, this.doc_inst.handle);
+                //gl.bindBuffer(gl.ARRAY_BUFFER, this.doc_inst.handle);
+                gl.bindBuffer(gl.ARRAY_BUFFER, shelf.docBuffer.handle);
                 gl.enableVertexAttribArray(loc_idoc);
                 gl.vertexAttribPointer(loc_idoc, 4, gl.FLOAT, false, 32, 16);
                 ext.vertexAttribDivisorANGLE(loc_idoc, 1);
             }
             //gl.drawArrays(gl.TRIANGLES, 0, 6 * 3);
-            ext.drawArraysInstancedANGLE(gl.TRIANGLES, 0, 6, this.grid_x * this.grid_y);
+            //ext.drawArraysInstancedANGLE(gl.TRIANGLES, 0, 6, this.grid_x * this.grid_y);
+            //ext.drawArraysInstancedANGLE(gl.TRIANGLES, 0, 6, 3);
+            ext.drawArraysInstancedANGLE(gl.TRIANGLES, 0, 6, shelf.documents.length);
             ext.vertexAttribDivisorANGLE(0, 0);
             ext.vertexAttribDivisorANGLE(1, 0);
             ext.vertexAttribDivisorANGLE(2, 0);
