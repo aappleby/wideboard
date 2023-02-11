@@ -61,7 +61,7 @@ export class App {
           this.librarian.loadFakeDocument();
         }
         */
-        this.librarian.loadDirectory("Metron/");
+        this.librarian.loadDirectory("linux/");
         let shelf = this.librarian.shelves[0];
         console.log(shelf);
         console.log("App::constructor() done");

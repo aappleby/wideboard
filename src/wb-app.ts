@@ -84,7 +84,7 @@ export class App {
     }
     */
 
-    this.librarian.loadDirectory("Metron/");
+    this.librarian.loadDirectory("linux/");
 
     let shelf = this.librarian.shelves[0];
     console.log(shelf);

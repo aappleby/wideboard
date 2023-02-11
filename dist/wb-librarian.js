@@ -27,6 +27,7 @@ release of the Radeon 9700 in 2002.[7]
 `;
 let totalLines = 0;
 let totalFiles = 0;
+let totalBytes = 0;
 export class Librarian {
     gl;
     screenCursorX;
@@ -51,7 +52,8 @@ export class Librarian {
     // requests in flight.
     loadNext() {
         //console.log("loadNext()");
-        while (1) {
+        //while (1) {
+        while (this.inFlight < 6) {
             if (this.docQueue.length) {
                 let doc = this.docQueue.pop();
                 //console.log(doc);
@@ -91,7 +93,6 @@ export class Librarian {
     }
     onDocumentLoad(filename, bytes) {
         //console.log("onDocumentLoad(" + filename + ")");
-        this.inFlight--;
         totalFiles++;
         let cursor = 0;
         // Skip byte order mark if present.
@@ -118,7 +119,8 @@ export class Librarian {
         }
         let lineCount = lineStarts.length;
         totalLines += lineCount;
-        console.log("Total lines " + totalLines);
+        totalBytes += bytes.length;
+        console.log("Total shelves: " + this.shelves.length + ", Total files: " + totalFiles + ", Total lines: " + totalLines + ", Total bytes: " + totalBytes);
         let shelfIndex = this.shelves.length - 1;
         let linemap = this.shelves[shelfIndex].linemap;
         if (linemap.cursorY > 3800) {
@@ -136,10 +138,8 @@ export class Librarian {
         this.loadNext();
     }
     ;
-    onDirectoryLoad(path, response, url) {
-        this.inFlight--;
+    onDirectoryLoad(path, response) {
         //console.log(path);
-        //console.log(url);
         //console.log(response);
         let re = /<a href="(.*?)">/g;
         let matches = [...response.matchAll(re)];
@@ -160,68 +160,26 @@ export class Librarian {
             else {
                 //console.log("Link: " + text);
             }
-            /*
-            if (text.includes("icon-directory")) {
-              //console.log(text);
-              let dir_match = text.match(/href="(.*?)"/);
-              if (dir_match && dir_match[1].length > 1) {
-                console.log("Dir: " + dir_match[1]);
-              }
-            }
-            */
-            //console.log(match[0]);
         }
-        /*
-        let files : Array<Object> = JSON.parse(response);
-        this.inFlight--;
-        //console.log(path);
-        //console.log(files);
-    
-        if (path.length && path[path.length - 1] == '/') {
-          path = path.substring(0, path.length - 1);
-        }
-    
-        for (let i = 0; i < files.length; i++) {
-          let file = files[i];
-    
-          // @ts-ignore
-          let newpath = path.length ? path + '/' + file.name : file.name;
-    
-          // @ts-ignore
-          if (file.dir) {
-            this.dirQueue.push(newpath);
-          } else {
-            this.docQueue.push(newpath);
-          }
-        }
-        */
         this.loadNext();
     }
     ;
     loadDocument(filename) {
-        let xhr = new XMLHttpRequest();
-        xhr.open('GET', filename);
-        xhr.responseType = 'arraybuffer';
         let self = this;
-        xhr.onload = () => {
-            let response = /** @type {!ArrayBuffer} */ (xhr.response);
-            let bytes = new Uint8Array(response);
-            self.onDocumentLoad(filename, bytes);
-        };
-        xhr.send();
         this.inFlight++;
+        fetch(filename).then((response) => response.arrayBuffer()).then((buf) => {
+            this.inFlight--;
+            self.onDocumentLoad(filename, new Uint8Array(buf));
+        });
     }
     ;
     loadDirectory(path) {
-        let xhr = new XMLHttpRequest();
-        xhr.open('GET', path);
         let self = this;
-        xhr.onload = () => {
-            //console.log(xhr);
-            self.onDirectoryLoad(path, xhr.response, xhr.responseURL);
-        };
-        xhr.send();
         this.inFlight++;
+        fetch(path).then((response) => response.text()).then((text) => {
+            this.inFlight--;
+            self.onDirectoryLoad(path, text);
+        });
     }
     ;
 }
