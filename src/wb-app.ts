@@ -32,6 +32,9 @@ export class App {
   pen : Pen;
   blitter : Blitter;
 
+  grid_x : number = 4;
+  grid_y : number = 4;
+
   //----------------------------------------
 
   constructor(canvasElementId : string) {
@@ -81,15 +84,15 @@ export class App {
 
     let inst_verts = [];
 
-    for (let x = 0; x < 64; x++) {
-      for (let y = 0; y < 128; y ++) {
-        inst_verts = inst_verts.concat([0.2,0.2,0.2,1.0, x * 768, y * 640, 22, (x + y * 64) * 22]);
+    for (let x = 0; x < this.grid_x; x++) {
+      for (let y = 0; y < this.grid_y; y ++) {
+        inst_verts = inst_verts.concat([0.2,0.2,0.2,1.0, x * 768, y * 640, 22, (x + y * this.grid_x) * 22]);
       }
     }
     this.doc_inst = new Buffer(gl, "doc_inst", gl.FLOAT, 8, 65536, inst_verts);
 
     this.librarian = new Librarian(gl);
-    for (let i = 0; i < 8192; i++) {
+    for (let i = 0; i < this.grid_x * this.grid_y; i++) {
       this.librarian.loadFakeDocument();
     }
     //this.librarian.loadDirectory('linux');
@@ -229,7 +232,7 @@ export class App {
         ext.vertexAttribDivisorANGLE(loc_idoc, 1);
       }
       //gl.drawArrays(gl.TRIANGLES, 0, 6 * 3);
-      ext.drawArraysInstancedANGLE(gl.TRIANGLES, 0, 6, 8192);
+      ext.drawArraysInstancedANGLE(gl.TRIANGLES, 0, 6, this.grid_x * this.grid_y);
 
       ext.vertexAttribDivisorANGLE(0, 0);
       ext.vertexAttribDivisorANGLE(1, 0);
