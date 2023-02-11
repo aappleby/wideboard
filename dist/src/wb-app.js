@@ -83,7 +83,7 @@ export class App {
         */
         //this.librarian.loadDirectory('../docs');
         //this.librarian.loadDocument("../Metron/src/MtCursor.cpp");
-        this.librarian.loadDirectory("../Metron/");
+        this.librarian.loadDirectory("../src/");
         let shelf = this.librarian.shelves[0];
         console.log(shelf);
         console.log("App::constructor() done");
@@ -115,7 +115,7 @@ export class App {
         this.blitter.draw(canvas, view, linemap.texture.handle, 0, -256 - 16, 256, 256);
         this.blitter.draw(canvas, view, shelf.texture.handle, 256 + 16, -256 - 16, 256, 256);
         this.blitter.draw(canvas, view, this.glyphmap.handle, 512 + 32, -256 - 16, 256, 256);
-        {
+        if (this.textShader.handle) {
             let shader = this.textShader;
             let prog = shader.handle;
             let cursor = Math.floor(performance.now() / 30) % 5000;

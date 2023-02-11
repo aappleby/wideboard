@@ -21,6 +21,8 @@ export class Blitter {
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, 1, 1, 0, gl.LUMINANCE, gl.UNSIGNED_BYTE, new Uint8Array([255, 255, 255, 255]));
     }
     draw(canvas, view, tex_handle, x, y, w, h) {
+        if (!this.texShader.handle)
+            return;
         let gl = this.gl;
         let prog = this.texShader.handle;
         gl.useProgram(prog);

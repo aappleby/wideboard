@@ -61,7 +61,23 @@ export class Librarian {
   // Pops files or directories off the queue and loads them until we have five
   // requests in flight.
   loadNext() {
-    while (this.inFlight < 10) {
+    //console.log("loadNext()");
+    while (1) {
+      if (this.docQueue.length) {
+        let doc = this.docQueue.pop()!;
+        //console.log(doc);
+        this.loadDocument(doc);
+      } else if (this.dirQueue.length) {
+        let dir = this.dirQueue.pop()!;
+        //console.log(dir);
+        this.loadDirectory(dir);
+      } else {
+        break;
+      }
+    }
+    //console.log("loadNext() done");
+    /*
+    while (this.inFlight < 100) {
       if (this.docQueue.length) {
         let doc = this.docQueue.pop()!;
         this.loadDocument(doc);
@@ -72,7 +88,8 @@ export class Librarian {
         break;
       }
     }
-  };
+    */
+  }
 
   loadFakeDocument() {
     this.inFlight++;
@@ -152,7 +169,7 @@ export class Librarian {
     let matches = [...response.matchAll(re)];
     //console.log(matches);
 
-    let file_filter = /href="[a-zA-Z].*?\.(h|hpp|c|cc|cpp|sh)"/g;
+    let file_filter = /href="[a-zA-Z].*?\.(h|hpp|c|cc|cpp|sh|ts)"/g;
     let dir_filter  = /href="[a-zA-Z].*?\/"/g;
 
     for (let match of matches) {

@@ -32,6 +32,7 @@ export class Blitter {
   }
 
   draw(canvas : HTMLCanvasElement, view : View, tex_handle : WebGLTexture, x : number, y : number, w : number, h : number) {
+    if (!this.texShader.handle) return;
     let gl = this.gl;
 
     let prog = this.texShader.handle;

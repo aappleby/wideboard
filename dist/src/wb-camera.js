@@ -38,7 +38,7 @@ export class Camera {
                 delta = 1;
             }
             var oldZoom = Math.log(this.viewGoal.scale) / Math.log(2);
-            var step = 0.5;
+            var step = 1.0;
             oldZoom = Math.round(oldZoom / step) * step;
             var newZoom = oldZoom + delta * step;
             if (newZoom < -10)

@@ -88,13 +88,14 @@ export function easeView(view, goal, delta, canvas) {
     view.origin.x = ease(view.origin.x, goal.origin.x, delta);
     view.origin.y = ease(view.origin.y, goal.origin.y, delta);
     view.scale = 1.0 / ease(1.0 / view.scale, 1.0 / goal.scale, delta);
-    // If we're within 3% of the goal scale, and 1/3 a pixel of the goal origin,
-    // snap to the goal.
+    // If we're within 0.01% of the goal scale and 0.01 of a pixel of the goal
+    // origin, snap to the goal.
     var ds = view.scale / goal.scale;
     var dx = worldToScreenX(0, view, canvas) - worldToScreenX(0, goal, canvas);
     var dy = worldToScreenY(0, view, canvas) - worldToScreenY(0, goal, canvas);
     var dist = Math.sqrt(dx * dx + dy * dy);
-    if ((ds > 0.99) && (ds < 1.01) && (dist < 0.33)) {
+    console.log(dist);
+    if ((ds > (1 / 1.0001)) && (ds < 1.0001) && (dist < 0.01)) {
         view.origin.x = goal.origin.x;
         view.origin.y = goal.origin.y;
         view.scale = goal.scale;

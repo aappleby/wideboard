@@ -82,6 +82,7 @@ export class Pen {
   };
 
   draw(canvas : HTMLCanvasElement, view : View) {
+    if (!this.shader.handle) return;
     let gl = this.gl;
     let buf = this.buf;
     let prog = this.shader.handle;
