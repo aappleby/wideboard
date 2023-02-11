@@ -135,6 +135,7 @@ export class Librarian {
 
     let lineCount = lineStarts.length;
     totalLines += lineCount;
+    console.log("Total lines " + totalLines);
 
     let shelfIndex = this.shelves.length - 1;
 

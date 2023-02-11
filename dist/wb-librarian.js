@@ -118,6 +118,7 @@ export class Librarian {
         }
         let lineCount = lineStarts.length;
         totalLines += lineCount;
+        console.log("Total lines " + totalLines);
         let shelfIndex = this.shelves.length - 1;
         let linemap = this.shelves[shelfIndex].linemap;
         if (linemap.cursorY > 3800) {

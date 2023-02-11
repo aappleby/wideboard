@@ -49,6 +49,21 @@ export class Texture {
                 }
                 gl.bindTexture(gl.TEXTURE_2D, self.handle);
                 gl.texImage2D(gl.TEXTURE_2D, 0, self.format, self.width, self.height, 0, self.format, gl.UNSIGNED_BYTE, luminance);
+                let proxy = new Array(128);
+                for (let cell_y = 0; cell_y < 8; cell_y++) {
+                    for (let cell_x = 0; cell_x < 16; cell_x++) {
+                        let accum = 0;
+                        for (let glyph_y = 0; glyph_y < 14; glyph_y++) {
+                            for (let glyph_x = 0; glyph_x < 6; glyph_x++) {
+                                let x = cell_x * 8 + glyph_x;
+                                let y = cell_y * 16 + glyph_y;
+                                accum += luminance[x + y * 256];
+                            }
+                        }
+                        proxy[cell_x + cell_y * 16] = accum / (6 * 14);
+                    }
+                }
+                console.log(proxy);
             }
             else {
                 gl.bindTexture(gl.TEXTURE_2D, self.handle);

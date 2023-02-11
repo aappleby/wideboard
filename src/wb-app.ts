@@ -84,7 +84,7 @@ export class App {
     }
     */
 
-    this.librarian.loadDirectory("../src/");
+    this.librarian.loadDirectory("Metron/");
 
     let shelf = this.librarian.shelves[0];
     console.log(shelf);
@@ -132,15 +132,10 @@ export class App {
 
       gl.useProgram(prog);
 
-      let shelf = this.librarian.shelves[0];
 
       //----------
       // Textures
 
-      gl.activeTexture(gl.TEXTURE0);
-      gl.bindTexture(gl.TEXTURE_2D, shelf.texture.handle);
-      gl.activeTexture(gl.TEXTURE1);
-      gl.bindTexture(gl.TEXTURE_2D, shelf.linemap.texture.handle);
       gl.activeTexture(gl.TEXTURE2);
       gl.bindTexture(gl.TEXTURE_2D, this.glyphmap.handle);
 
@@ -183,37 +178,45 @@ export class App {
       //----------
       // Vertex Buffer
 
-      let loc_vpos = gl.getAttribLocation(prog, "vpos");
-      let loc_icol = gl.getAttribLocation(prog, "iColor");
-      let loc_idoc = gl.getAttribLocation(prog, "iDocPos");
+      for (let shelf_index = 0; shelf_index < this.librarian.shelves.length; shelf_index++) {
+        let shelf = this.librarian.shelves[shelf_index];
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, shelf.texture.handle);
+        gl.activeTexture(gl.TEXTURE1);
+        gl.bindTexture(gl.TEXTURE_2D, shelf.linemap.texture.handle);
 
-      let ext = gl.getExtension('ANGLE_instanced_arrays');
+        let loc_vpos = gl.getAttribLocation(prog, "vpos");
+        let loc_icol = gl.getAttribLocation(prog, "iColor");
+        let loc_idoc = gl.getAttribLocation(prog, "iDocPos");
 
-      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indices.handle);
+        let ext = gl.getExtension('ANGLE_instanced_arrays');
 
-      if (loc_vpos >= 0) {
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.square.handle);
-        gl.enableVertexAttribArray(loc_vpos);
-        gl.vertexAttribPointer(loc_vpos, 2, gl.FLOAT, false, 8,  0);
-        ext.vertexAttribDivisorANGLE(loc_vpos, 0);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indices.handle);
+
+        if (loc_vpos >= 0) {
+          gl.bindBuffer(gl.ARRAY_BUFFER, this.square.handle);
+          gl.enableVertexAttribArray(loc_vpos);
+          gl.vertexAttribPointer(loc_vpos, 2, gl.FLOAT, false, 8,  0);
+          ext.vertexAttribDivisorANGLE(loc_vpos, 0);
+        }
+        if (loc_icol >= 0) {
+          gl.bindBuffer(gl.ARRAY_BUFFER, shelf.docBuffer.handle);
+          gl.enableVertexAttribArray(loc_icol);
+          gl.vertexAttribPointer(loc_icol, 4, gl.FLOAT, false, 32,  0);
+          ext.vertexAttribDivisorANGLE(loc_icol, 1);
+        }
+        if (loc_idoc >= 0) {
+          gl.bindBuffer(gl.ARRAY_BUFFER, shelf.docBuffer.handle);
+          gl.enableVertexAttribArray(loc_idoc);
+          gl.vertexAttribPointer(loc_idoc, 4, gl.FLOAT, false, 32,  16);
+          ext.vertexAttribDivisorANGLE(loc_idoc, 1);
+        }
+        ext.drawElementsInstancedANGLE(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, 0, shelf.documents.length);
+
+        ext.vertexAttribDivisorANGLE(0, 0);
+        ext.vertexAttribDivisorANGLE(1, 0);
+        ext.vertexAttribDivisorANGLE(2, 0);
       }
-      if (loc_icol >= 0) {
-        gl.bindBuffer(gl.ARRAY_BUFFER, shelf.docBuffer.handle);
-        gl.enableVertexAttribArray(loc_icol);
-        gl.vertexAttribPointer(loc_icol, 4, gl.FLOAT, false, 32,  0);
-        ext.vertexAttribDivisorANGLE(loc_icol, 1);
-      }
-      if (loc_idoc >= 0) {
-        gl.bindBuffer(gl.ARRAY_BUFFER, shelf.docBuffer.handle);
-        gl.enableVertexAttribArray(loc_idoc);
-        gl.vertexAttribPointer(loc_idoc, 4, gl.FLOAT, false, 32,  16);
-        ext.vertexAttribDivisorANGLE(loc_idoc, 1);
-      }
-      ext.drawElementsInstancedANGLE(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, 0, shelf.documents.length);
-
-      ext.vertexAttribDivisorANGLE(0, 0);
-      ext.vertexAttribDivisorANGLE(1, 0);
-      ext.vertexAttribDivisorANGLE(2, 0);
     }
   }
 

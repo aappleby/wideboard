@@ -25,6 +25,10 @@ varying vec2 ftex;
 varying vec4 fcol;
 varying float shelf_offset;
 
+// docmap is 1024x1024
+// linemap is 4096x4096
+// glyphmap is 256x256
+
 const float glyphs_per_row = 32.0;
 const float inv_glyph_per_row = 1.0 / glyphs_per_row;
 const float glyph_w = 6.0;
@@ -83,10 +87,6 @@ void main(void) {
 //------------------------------------------------------------------------------
 
 #ifdef _FRAGMENT_
-
-// docmap is 1024x1024
-// linemap is 4096x4096
-// glyphmap is 256x256
 
 void main(void) {
 
