@@ -59,42 +59,6 @@ export class Librarian {
     this.inFlight = 0;
   }
 
-  // Pops files or directories off the queue and loads them until we have five
-  // requests in flight.
-  loadNext() {
-    //console.log("loadNext()");
-
-    //while (1) {
-    while(this.inFlight < 6) {
-      if (this.docQueue.length) {
-        let doc = this.docQueue.pop()!;
-        //console.log(doc);
-        this.loadDocument(doc);
-      } else if (this.dirQueue.length) {
-        let dir = this.dirQueue.pop()!;
-        //console.log(dir);
-        this.loadDirectory(dir);
-      } else {
-        break;
-      }
-    }
-
-    //console.log("loadNext() done");
-    /*
-    while (this.inFlight < 100) {
-      if (this.docQueue.length) {
-        let doc = this.docQueue.pop()!;
-        this.loadDocument(doc);
-      } else if (this.dirQueue.length) {
-        let dir = this.dirQueue.pop()!;
-        this.loadDirectory(dir);
-      } else {
-        break;
-      }
-    }
-    */
-  }
-
   loadFakeDocument() {
     this.inFlight++;
     let blob = new Uint8Array(fake_document.length);
@@ -159,7 +123,6 @@ export class Librarian {
       this.screenCursorX += 1280;
     }
 
-    this.loadNext();
   };
 
   onDirectoryLoad(path : string, response : string) {
@@ -190,8 +153,6 @@ export class Librarian {
         //console.log("Link: " + text);
       }
     }
-
-    this.loadNext();
   };
 
   loadDocument(filename : string) {
@@ -199,6 +160,7 @@ export class Librarian {
     this.inFlight++;
     fetch(filename).then((response) => response.arrayBuffer()).then((buf) => {
       this.inFlight--;
+      self.loadNext();
       self.onDocumentLoad(filename, new Uint8Array(buf));
     });
   };
@@ -208,8 +170,27 @@ export class Librarian {
     this.inFlight++;
     fetch(path).then((response) => response.text()).then((text) => {
       this.inFlight--;
+      self.loadNext();
       self.onDirectoryLoad(path, text)
+      self.loadNext();
     });
   };
 
+  // Pops files or directories off the queue and loads them until we have five
+  // requests in flight.
+  loadNext() {
+    while(this.inFlight < 6) {
+      if (this.docQueue.length) {
+        let doc = this.docQueue.pop()!;
+        //console.log(doc);
+        this.loadDocument(doc);
+      } else if (this.dirQueue.length) {
+        let dir = this.dirQueue.pop()!;
+        //console.log(dir);
+        this.loadDirectory(dir);
+      } else {
+        break;
+      }
+    }
+  }
 };

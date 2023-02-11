@@ -10,21 +10,10 @@ export class Shader {
             this.handle = compile_shader(gl, name, text);
         }
         else {
-            /*
-            let xhr1 = new XMLHttpRequest();
-            xhr1.open('GET', this.name, false);
-            xhr1.send();
-            let source = xhr1.responseText;
-            this.handle = compile_shader(gl, name, source);
-            */
-            let xhr = new XMLHttpRequest();
-            xhr.open('GET', this.name);
             let self = this;
-            xhr.onload = () => {
-                //console.log(xhr);
-                self.handle = compile_shader(self.gl, self.name, xhr.response);
-            };
-            xhr.send();
+            fetch(this.name).then((response) => response.text()).then((text) => {
+                self.handle = compile_shader(self.gl, self.name, text);
+            });
         }
     }
 }
