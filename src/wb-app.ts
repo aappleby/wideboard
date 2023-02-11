@@ -27,7 +27,7 @@ export class App {
   glyphmap : Texture;
 
   square : Buffer;
-  doc_inst : Buffer;
+  indices : Buffer;
 
   pen : Pen;
   blitter : Blitter;
@@ -72,30 +72,9 @@ export class App {
     this.glyphmap = new Texture(gl, gl.LUMINANCE, 256, 256);
     this.glyphmap.load('terminus.bmp');
 
-    let square_verts = [
-      0,0,
-      0,1,
-      1,1,
-      0,0,
-      1,1,
-      1,0,
-    ];
-    this.square = new Buffer(gl, "square", gl.FLOAT, 2, 1024, square_verts);
+    this.indices = new Buffer(gl, "square_indices", gl.ELEMENT_ARRAY_BUFFER, gl.UNSIGNED_BYTE, 1, 6, [0, 1, 2, 0, 2, 3]);
 
-    let inst_verts = [];
-
-    for (let x = 0; x < this.grid_x; x++) {
-      for (let y = 0; y < this.grid_y; y ++) {
-        inst_verts = inst_verts.concat(
-          [
-            0.2,0.2,0.2,1.0,
-            x * 768, y * 640,
-            22,
-            //4038,
-            (x + y * this.grid_x) * 22]);
-      }
-    }
-    this.doc_inst = new Buffer(gl, "doc_inst", gl.FLOAT, 8, 65536, inst_verts);
+    this.square = new Buffer(gl, "square", gl.ARRAY_BUFFER, gl.FLOAT, 2, 1024, [0,0, 1,0, 1, 1, 0, 1]);
 
     this.librarian = new Librarian(gl);
 
@@ -105,8 +84,6 @@ export class App {
     }
     */
 
-    //this.librarian.loadDirectory('../docs');
-    //this.librarian.loadDocument("../Metron/src/MtCursor.cpp");
     this.librarian.loadDirectory("../src/");
 
     let shelf = this.librarian.shelves[0];
@@ -210,24 +187,9 @@ export class App {
       let loc_icol = gl.getAttribLocation(prog, "iColor");
       let loc_idoc = gl.getAttribLocation(prog, "iDocPos");
 
-      /*
-
-      if (loc_vpos >= 0) gl.enableVertexAttribArray(loc_vpos);
-      if (loc_icol >= 0) gl.enableVertexAttribArray(loc_icol);
-      if (loc_idoc >= 0) gl.enableVertexAttribArray(loc_idoc);
-      if (loc_vpos >= 0) gl.vertexAttribPointer(loc_vpos, 2, gl.FLOAT, false, 40,  0);
-      if (loc_icol >= 0) gl.vertexAttribPointer(loc_icol, 4, gl.FLOAT, false, 40,  8);
-      if (loc_idoc >= 0) gl.vertexAttribPointer(loc_idoc, 4, gl.FLOAT, false, 40, 24);
-
-      gl.drawArrays(gl.TRIANGLES, 0, 6 * 3);
-      */
-
       let ext = gl.getExtension('ANGLE_instanced_arrays');
-      //console.log(ext);
 
-      //gl.bindBuffer(gl.ARRAY_BUFFER, shelf.docBuffer.handle);
-      //gl.bufferData(gl.ARRAY_BUFFER, shelf.docBuffer.data, gl.DYNAMIC_DRAW);
-
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indices.handle);
 
       if (loc_vpos >= 0) {
         gl.bindBuffer(gl.ARRAY_BUFFER, this.square.handle);
@@ -236,23 +198,18 @@ export class App {
         ext.vertexAttribDivisorANGLE(loc_vpos, 0);
       }
       if (loc_icol >= 0) {
-        //gl.bindBuffer(gl.ARRAY_BUFFER, this.doc_inst.handle);
         gl.bindBuffer(gl.ARRAY_BUFFER, shelf.docBuffer.handle);
         gl.enableVertexAttribArray(loc_icol);
         gl.vertexAttribPointer(loc_icol, 4, gl.FLOAT, false, 32,  0);
         ext.vertexAttribDivisorANGLE(loc_icol, 1);
       }
       if (loc_idoc >= 0) {
-        //gl.bindBuffer(gl.ARRAY_BUFFER, this.doc_inst.handle);
         gl.bindBuffer(gl.ARRAY_BUFFER, shelf.docBuffer.handle);
         gl.enableVertexAttribArray(loc_idoc);
         gl.vertexAttribPointer(loc_idoc, 4, gl.FLOAT, false, 32,  16);
         ext.vertexAttribDivisorANGLE(loc_idoc, 1);
       }
-      //gl.drawArrays(gl.TRIANGLES, 0, 6 * 3);
-      //ext.drawArraysInstancedANGLE(gl.TRIANGLES, 0, 6, this.grid_x * this.grid_y);
-      //ext.drawArraysInstancedANGLE(gl.TRIANGLES, 0, 6, 3);
-      ext.drawArraysInstancedANGLE(gl.TRIANGLES, 0, 6, shelf.documents.length);
+      ext.drawElementsInstancedANGLE(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, 0, shelf.documents.length);
 
       ext.vertexAttribDivisorANGLE(0, 0);
       ext.vertexAttribDivisorANGLE(1, 0);

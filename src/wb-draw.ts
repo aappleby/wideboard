@@ -20,7 +20,7 @@ export class Pen {
 
   constructor(gl : WebGLRenderingContext) {
     this.gl = gl;
-    this.buf = new Buffer(gl, 'debugdraw', gl.FLOAT, 8, 4096);
+    this.buf = new Buffer(gl, 'debugdraw', gl.ARRAY_BUFFER, gl.FLOAT, 8, 4096);
     this.shader = new Shader(gl, 'simple.glsl');
   }
 

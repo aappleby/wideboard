@@ -60,7 +60,9 @@ export class Camera {
             util.snapView(this.viewGoalSnap, this.canvas);
             return;
         }
-        this.viewGoal.origin.y -= delta / this.viewGoal.scale;
+        else {
+            this.viewGoal.origin.y += delta / this.viewGoal.scale;
+        }
         this.viewGoalSnap.copy(this.viewGoal);
         util.snapView(this.viewGoalSnap, this.canvas);
     }

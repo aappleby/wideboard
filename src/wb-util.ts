@@ -57,9 +57,9 @@ export class View  {
   origin : Vec2;
   scale : number;
 
-  constructor(origin? : Vec2, scale? : number) {
-    this.origin = origin !== undefined ? origin.clone() : new Vec2(0, 0);
-    this.scale = scale !== undefined ? scale : 1;
+  constructor(origin : Vec2 = new Vec2(0,0), scale : number = 1) {
+    this.origin = origin;
+    this.scale = scale;
   }
 
   copy(view : View) {
@@ -108,8 +108,6 @@ export function easeView(view : View, goal : View, delta : number, canvas : HTML
   var dx = worldToScreenX(0, view, canvas) - worldToScreenX(0, goal, canvas);
   var dy = worldToScreenY(0, view, canvas) - worldToScreenY(0, goal, canvas);
   var dist = Math.sqrt(dx * dx + dy * dy);
-
-  console.log(dist);
 
   if ((ds > (1 / 1.0001)) && (ds < 1.0001) && (dist < 0.01)) {
     view.origin.x = goal.origin.x;
@@ -212,33 +210,6 @@ export function worldToScreenY(y : number, view : View, canvas : HTMLCanvasEleme
   y *= view.scale;
   y += Math.round(canvas.height / 2);
   return y;
-};
-
-//--------------------------------------------------------------------------------
-// Scans a text file (represented as a blob) for line ends & returns an array
-// of all the line start indices in the file.
-
-export function findLines(bytes : Uint8Array) {
-  let lines : Array<number> = [];
-  let cursor = 0;
-
-  // Skip byte order mark if present.
-  if (bytes[0] == 239) {
-    cursor = 3;
-  }
-
-  for (var i = cursor; i < bytes.length; i++) {
-    if (bytes[i] == 10) {
-      var lineLength = i - cursor;
-      lines.push(cursor);
-      cursor = i + 1;
-    }
-  }
-  if (cursor < bytes.length) {
-    lines.push(cursor);
-  }
-
-  return lines;
 };
 
 //--------------------------------------------------------------------------------

@@ -45,10 +45,10 @@ export class Shelf {
     this.cleanCursorY = 0;
     this.linemap = new Linemap(gl, 4096, 4096);
 
-    //this.docPosBuffer   = new Buffer(gl, 'iDocPos',   gl.FLOAT, 4, 65536);
-    //this.docColorBuffer = new Buffer(gl, 'iDocColor', gl.FLOAT, 4, 65536);
+    //this.docPosBuffer   = new Buffer(gl, 'iDocPos',   gl.ARRAY_BUFFER, gl.FLOAT, 4, 65536);
+    //this.docColorBuffer = new Buffer(gl, 'iDocColor', gl.ARRAY_BUFFER, gl.FLOAT, 4, 65536);
 
-    this.docBuffer = new Buffer(gl, 'doc', gl.FLOAT, 8, 65536);
+    this.docBuffer = new Buffer(gl, 'doc', gl.ARRAY_BUFFER, gl.FLOAT, 8, 65536);
 
     this.tempBuffer = new Uint8Array(1024);
   }
