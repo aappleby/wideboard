@@ -104,6 +104,7 @@ export class App {
     gl.clearColor(0.3, 0.3, 0.4, 1);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
+    /*
     {
       let pen = this.pen;
       pen.reset();
@@ -117,6 +118,7 @@ export class App {
       }
       pen.draw(canvas, view);
     }
+    */
 
     let shelf = this.librarian.shelves[0];
     let linemap = shelf.linemap;

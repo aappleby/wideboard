@@ -75,19 +75,21 @@ export class App {
         gl.viewport(0, 0, canvas.width, canvas.height);
         gl.clearColor(0.3, 0.3, 0.4, 1);
         gl.clear(gl.COLOR_BUFFER_BIT);
+        /*
         {
-            let pen = this.pen;
-            pen.reset();
-            pen.color(0.23, 0.23, 0.23);
-            let interval = 16;
-            for (let i = -1024; i <= 1024; i += interval) {
-                pen.moveTo(i, -1024);
-                pen.lineTo(i, 1024);
-                pen.moveTo(-1024, i);
-                pen.lineTo(1024, i);
-            }
-            pen.draw(canvas, view);
+          let pen = this.pen;
+          pen.reset();
+          pen.color(0.23, 0.23, 0.23);
+          let interval = 16;
+          for (let i = -1024; i <= 1024; i += interval) {
+            pen.moveTo(i, -1024);
+            pen.lineTo(i,  1024);
+            pen.moveTo(-1024, i);
+            pen.lineTo( 1024, i);
+          }
+          pen.draw(canvas, view);
         }
+        */
         let shelf = this.librarian.shelves[0];
         let linemap = shelf.linemap;
         this.blitter.draw(canvas, view, linemap.texture.handle, 0, -256 - 16, 256, 256);
