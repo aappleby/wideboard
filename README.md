@@ -8,7 +8,10 @@ fit in your GPU's ram".
 
 Wideboard uses WebGL 1, some special shaders, and some simple GPU-compatible
 data structures to render arbitrarily large amounts of monospace, unformatted
-text in a web browser.
+text in a web browser. It has been tested with 56000 files from the Linux repo
+(31 million lines of source, or around 1.2 gigabytes of raw text) and runs at 60
+fps while using single-digit percentages of a 3080ti GPU. It should run equally
+well on integrated GPUs, barring memory limits.
 
 To launch Wideboard, run "python3 -m http.server" in in the root of this repo
 and then go to http://localhost:8000. By default it renders this README.md
@@ -22,8 +25,8 @@ resets the view.
 
 To render the entire Linux kernel source tree in your browser, check out
 https://github.com/torvalds/linux under /docs and refresh the page. This will
-use a _lot_ of GPU ram and there's no real error checking if you run out, so
-proceed with caution.
+use a _lot_ of GPU ram (something about Chrome is bloating GPU memory usage by
+~4x) and there's no real error checking if you run out, so proceed with caution.
 
 NOTE - If you're running the server under WSL, loading will take _ages_ as
 WSL seems to add ~300 milliseconds of delay per HTTP connection. Running
