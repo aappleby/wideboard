@@ -2,11 +2,6 @@
 // splitting the chunks into lines, and storing the various bits of data
 // in the linemaps and docmaps.
 
-import { compile_shader } from "./gl-base.js";
-import { Document } from "./wb-document.js"
-import { Linemap } from "./wb-linemap.js"
-import { Scrap } from "./wb-scrap.js"
-import { Shader } from "./wb-shader.js";
 import { Shelf } from "./wb-shelf.js"
 
 const fake_document : string = String.raw`A graphics processing unit (GPU) is a specialized electronic circuit designed to

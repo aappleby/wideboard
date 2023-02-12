@@ -3,7 +3,6 @@ export class Document {
     filename;
     linePos;
     lineLength;
-    scraps;
     shelfIndex;
     shelfPos;
     screenX;
@@ -13,7 +12,6 @@ export class Document {
         this.filename = 'filename';
         this.linePos = [];
         this.lineLength = [];
-        this.scraps = [];
         this.shelfIndex = -1;
         this.shelfPos = -1;
         this.screenX = 0;

@@ -20,7 +20,7 @@ export class Blitter {
     ];
 
     this.square = new Buffer(gl, 'square', gl.ARRAY_BUFFER, gl.FLOAT, 12, 4, square_data);
-    this.texShader = new Shader(gl, "blitter.glsl");
+    this.texShader = new Shader(gl, "src/blitter.glsl");
     this.white_texel = new Texture(gl, gl.LUMINANCE, 1, 1);
 
     gl.bindTexture(gl.TEXTURE_2D, this.white_texel.handle);

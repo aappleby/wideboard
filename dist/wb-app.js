@@ -51,9 +51,9 @@ export class App {
         this.blitter = new Blitter(gl);
         this.frameCallback = this.onRequestAnimationFrame.bind(this);
         this.pen = new Pen(gl);
-        this.textShader = new Shader(gl, 'text1.glsl');
+        this.textShader = new Shader(gl, 'src/text1.glsl');
         this.glyphmap = new Texture(gl, gl.LUMINANCE, 256, 256);
-        this.glyphmap.load('terminus.bmp');
+        this.glyphmap.load('src/terminus.bmp');
         this.indices = new Buffer(gl, "square_indices", gl.ELEMENT_ARRAY_BUFFER, gl.UNSIGNED_BYTE, 1, 6, [0, 1, 2, 0, 2, 3]);
         this.square = new Buffer(gl, "square", gl.ARRAY_BUFFER, gl.FLOAT, 2, 1024, [0, 0, 1, 0, 1, 1, 0, 1]);
         this.librarian = new Librarian(gl);

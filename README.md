@@ -26,7 +26,8 @@ use a _lot_ of GPU ram and there's no real error checking if you run out, so
 proceed with caution.
 
 NOTE - If you're running the server under WSL, loading will take _ages_ as
-WSL seems to add ~300 milliseconds of delay per HTTP connection.
+WSL seems to add ~300 milliseconds of delay per HTTP connection. Running
+directly under Windows or on Linux will load files 30x faster.
 
 Above this message you'll see three squares - the left one contains lines of
 ASCII text packed into a 4096x4096 texture, the middle one contains one texel
