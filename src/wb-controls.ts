@@ -110,17 +110,10 @@ export class Controls {
   };
 
   onKeyDown(event : KeyboardEvent) {
-    // FIXME check key code
-    /*
-    if (event.ctrlKey && event.keyCode == 81) {
-      wavey = 1.0 - wavey;
-    }
-
     var targets = this.targets;
     for (var i = 0; i < targets.length; i++) {
-      targets[i].onKeyDown(event.keyCode,
+      targets[i].onKeyDown(event.key,
                            event.shiftKey, event.ctrlKey, event.altKey);
     }
-    */
   };
 };

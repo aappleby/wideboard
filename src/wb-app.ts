@@ -8,6 +8,8 @@ import { Texture } from "./wb-texture.js"
 import { init_gl } from "./gl-base.js"
 import { Blitter } from "./blitter.js"
 
+import { totalBytes, totalFiles, totalLines } from "./wb-librarian.js"
+
 //------------------------------------------------------------------------------
 
 export class App {
@@ -78,16 +80,8 @@ export class App {
 
     this.librarian = new Librarian(gl);
 
-    /*
-    for (let i = 0; i < this.grid_x * this.grid_y; i++) {
-      this.librarian.loadFakeDocument();
-    }
-    */
-
-    this.librarian.loadDirectory("linux/");
-
-    let shelf = this.librarian.shelves[0];
-    console.log(shelf);
+    this.librarian.loadDocument("README.md");
+    this.librarian.loadDirectory("docs/");
 
     console.log("App::constructor() done");
   }
@@ -140,9 +134,14 @@ export class App {
 
       gl.activeTexture(gl.TEXTURE2);
       gl.bindTexture(gl.TEXTURE_2D, this.glyphmap.handle);
+      gl.activeTexture(gl.TEXTURE3);
+      gl.bindTexture(gl.TEXTURE_2D, this.glyphmap.proxy_handle);
 
       //----------
       // Uniforms
+
+      //let u_useProxy = gl.getUniformLocation(prog, "useProxy");
+      //gl.uniform1i(u_useProxy, this.camera.viewSnap.scale <= 0.3 ? 1.0 : 0.0);
 
       let u_worldToView = gl.getUniformLocation(prog, "worldToView");
       let u_screenSize  = gl.getUniformLocation(prog, "screenSize");
@@ -156,10 +155,12 @@ export class App {
       let u_docmap   = gl.getUniformLocation(prog, "docmap");
       let u_linemap  = gl.getUniformLocation(prog, "linemap");
       let u_glyphmap = gl.getUniformLocation(prog, "glyphmap");
+      let u_proxymap = gl.getUniformLocation(prog, "proxymap");
 
       gl.uniform1i(u_docmap,   0);
       gl.uniform1i(u_linemap,  1);
       gl.uniform1i(u_glyphmap, 2);
+      gl.uniform1i(u_proxymap, 3);
 
       let u_background    = gl.getUniformLocation(prog, "background");
       let u_foreground    = gl.getUniformLocation(prog, "foreground");
@@ -228,16 +229,14 @@ export class App {
   onRequestAnimationFrame(time : number) {
     this.frameCounter++;
 
-    let top_span = document.getElementById("top_span")!;
-    top_span.innerText = "Frame counter " + this.frameCounter;
-
     let delta = time - this.lastFrameTime;
     this.camera.update(delta);
     this.render();
     this.lastFrameTime = time;
 
     let bot_span = document.getElementById("bot_span")!;
-    bot_span.innerText = "Frame delta " + delta;
+
+    bot_span.innerText = "Frame rate " + Math.floor(1000.0 / delta) + ", Total shelves: " + this.librarian.shelves.length + ", Total files: " + totalFiles + ", Total lines: " + totalLines + ", Total bytes: " + totalBytes;
 
     let err = this.gl.getError();
     if (err) {

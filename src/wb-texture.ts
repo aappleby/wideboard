@@ -3,6 +3,7 @@
 export class Texture {
   gl : WebGLRenderingContext;
   handle : WebGLTexture;
+  proxy_handle : WebGLTexture | null;
   width : number;
   height : number;
   format : GLenum;
@@ -12,6 +13,7 @@ export class Texture {
   constructor(gl : WebGLRenderingContext, format : GLenum, width : number, height : number) {
     this.gl = gl;
     this.handle = gl.createTexture()!;
+    this.proxy_handle = gl.createTexture()!;
     this.width = width;
     this.height = height;
     this.format = format;
@@ -22,10 +24,18 @@ export class Texture {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S,     gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T,     gl.CLAMP_TO_EDGE);
-
     gl.texImage2D(gl.TEXTURE_2D, 0, this.format,
                   this.width, this.height, 0,
                   this.format, gl.UNSIGNED_BYTE, null);
+
+    gl.bindTexture(gl.TEXTURE_2D, this.proxy_handle);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S,     gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T,     gl.CLAMP_TO_EDGE);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE,
+                  256, 1, 0,
+                  gl.LUMINANCE, gl.UNSIGNED_BYTE, null);
   }
 
   extractBytes(image : HTMLImageElement) {
@@ -61,22 +71,29 @@ export class Texture {
                       self.width, self.height, 0,
                       self.format, gl.UNSIGNED_BYTE, luminance);
 
-                      let proxy = new Array(128);
-
+        let proxy = new Array(256);
         for (let cell_y = 0; cell_y < 8; cell_y++) {
-          for (let cell_x = 0; cell_x < 16; cell_x++) {
+          for (let cell_x = 0; cell_x < 32; cell_x++) {
             let accum = 0;
             for (let glyph_y = 0; glyph_y < 14; glyph_y++) {
               for (let glyph_x = 0; glyph_x < 6; glyph_x++) {
                 let x = cell_x * 8  + glyph_x;
                 let y = cell_y * 16 + glyph_y;
-                accum += luminance[x + y * 256];
+                accum += luminance[x + y * 256] ? 1 : 0;
               }
             }
-            proxy[cell_x + cell_y * 16] = accum / (6 * 14);
+            //proxy[cell_x + cell_y * 32] = accum / (6 * 14);
+            proxy[cell_x + cell_y * 32] = (accum / (6 * 14)) * 255.0;
           }
         }
-        console.log(proxy);
+        //console.log(proxy);
+
+        gl.bindTexture(gl.TEXTURE_2D, self.proxy_handle);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE,
+                      256, 1, 0,
+                      gl.LUMINANCE, gl.UNSIGNED_BYTE, new Uint8Array(proxy));
+
+
       } else {
         gl.bindTexture(gl.TEXTURE_2D, self.handle);
         gl.texImage2D(gl.TEXTURE_2D, 0, self.format, self.format, gl.UNSIGNED_BYTE, image);

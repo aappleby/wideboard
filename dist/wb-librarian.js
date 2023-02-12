@@ -25,9 +25,9 @@ transform, lighting, triangle setup/clipping, and rendering engines".[6] Rival
 ATI Technologies coined the term "visual processing unit" or VPU with the
 release of the Radeon 9700 in 2002.[7]
 `;
-let totalLines = 0;
-let totalFiles = 0;
-let totalBytes = 0;
+export let totalLines = 0;
+export let totalFiles = 0;
+export let totalBytes = 0;
 export class Librarian {
     gl;
     screenCursorX;
@@ -85,7 +85,6 @@ export class Librarian {
         let lineCount = lineStarts.length;
         totalLines += lineCount;
         totalBytes += bytes.length;
-        console.log("Total shelves: " + this.shelves.length + ", Total files: " + totalFiles + ", Total lines: " + totalLines + ", Total bytes: " + totalBytes);
         let shelfIndex = this.shelves.length - 1;
         let linemap = this.shelves[shelfIndex].linemap;
         if (linemap.cursorY > 3800) {
@@ -108,7 +107,7 @@ export class Librarian {
         let re = /<a href="(.*?)">/g;
         let matches = [...response.matchAll(re)];
         //console.log(matches);
-        let file_filter = /href="[a-zA-Z].*?\.(h|hpp|c|cc|cpp|sh|ts)"/g;
+        let file_filter = /href="[a-zA-Z].*?\.(h|hpp|c|cc|cpp|sh|js|ts|txt|md)"/g;
         let dir_filter = /href="[a-zA-Z].*?\/"/g;
         for (let match of matches) {
             let text = match[0];

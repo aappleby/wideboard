@@ -5,5 +5,5 @@ export interface DragTarget {
   onDragEnd(x : number, y : number, shiftKey : boolean, ctrlKey : boolean, altKey : boolean) : void;
   onMouseWheel(x : number, y : number, delta : number, shiftKey : boolean, ctrlKey : boolean, altKey : boolean) : void;
   onMouseClick(x : number, y : number, shiftKey : boolean, ctrlKey : boolean, altKey : boolean) : void;
-  onKeyDown(key : number, shiftKey : boolean, ctrlKey : boolean, altKey : boolean) : void;
+  onKeyDown(key : string, shiftKey : boolean, ctrlKey : boolean, altKey : boolean) : void;
 };

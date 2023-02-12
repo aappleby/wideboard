@@ -8,6 +8,7 @@ uniform vec4 screenSize;
 uniform sampler2D docmap;
 uniform sampler2D linemap;
 uniform sampler2D glyphmap;
+uniform sampler2D proxymap;
 
 //----------
 
@@ -18,6 +19,7 @@ uniform vec2 cursor;
 
 uniform float wavey;
 uniform float ftime;
+uniform bool useProxy;
 
 //----------
 
@@ -32,7 +34,7 @@ varying float shelf_offset;
 const float glyphs_per_row = 32.0;
 const float inv_glyph_per_row = 1.0 / glyphs_per_row;
 const float glyph_w = 6.0;
-const float glyph_h = 16.0;
+const float glyph_h = 14.0;
 const float cell_w = 8.0;
 const float cell_h = 16.0;
 const float text_cols = 128.0;
@@ -133,25 +135,30 @@ void main(void) {
   // Read the glyph index from the linemap & convert to an integer.
   float glyphIndex = floor(texture2D(linemap, linePos).r * 255.0 + 0.5);
 
-  // Wrap glyph index around glyphmap to get integer glyph position.
-  vec2 glyphCell;
-  glyphCell.x = fract(glyphIndex * inv_glyph_per_row);
-  glyphCell.y = floor(glyphIndex * inv_glyph_per_row);
+  if (useProxy) {
+    float proxy = texture2D(proxymap, vec2((glyphIndex + 0.5) / 256.0, cellPos.y)).r;
+    gl_FragColor = mix(back, foreground, proxy * 3.0);
+  }
+  else {
+    // Wrap glyph index around glyphmap to get integer glyph position.
+    vec2 glyphCell;
+    glyphCell.x = fract(glyphIndex * inv_glyph_per_row);
+    glyphCell.y = floor(glyphIndex * inv_glyph_per_row);
 
-  cellPos.x += 0.5 / cell_w;
-  cellPos.y += 0.5 / cell_h;
+    cellPos.x += 0.5 / cell_w;
+    cellPos.y += 0.5 / cell_h;
 
-  // Combine glyph position with inside-cell position to get sample position in texel coordinates.
-  vec2 glyphLoc =
-    glyphCell * vec2(glyphs_per_row * cell_w  / glyphmap_w, cell_h  / glyphmap_w) +
-    cellPos   * vec2(                 glyph_w / glyphmap_w, glyph_h / glyphmap_w);
+    // Combine glyph position with inside-cell position to get sample position in texel coordinates.
+    vec2 glyphLoc =
+      glyphCell * vec2(glyphs_per_row * cell_w  / glyphmap_w, cell_h  / glyphmap_w) +
+      cellPos   * vec2(                 glyph_w / glyphmap_w, glyph_h / glyphmap_w);
 
-  // Read output color from glyphmap.
-  float result = texture2D(glyphmap, glyphLoc).r;
+    // Read output color from glyphmap.
+    float result = texture2D(glyphmap, glyphLoc).r;
 
-  result = clamp(result * 5.0 - 1.5, 0.0, 1.0);
-
-  gl_FragColor = mix(back, foreground, result);
+    result = clamp(result * 5.0 - 1.5, 0.0, 1.0);
+    gl_FragColor = mix(back, foreground, result);
+  }
 }
 
 #endif

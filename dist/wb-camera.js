@@ -30,7 +30,7 @@ export class Camera {
     ;
     onMouseWheel(x, y, delta, shiftKey, ctrlKey, altKey) {
         //console.log("Camera::onMouseWheel");
-        if (shiftKey) {
+        /*if (shiftKey)*/ {
             if (delta > 0) {
                 delta = -1;
             }
@@ -60,29 +60,31 @@ export class Camera {
             util.snapView(this.viewGoalSnap, this.canvas);
             return;
         }
+        /*
         else {
-            this.viewGoal.origin.y += delta / this.viewGoal.scale;
+          this.viewGoal.origin.y += delta / this.viewGoal.scale;
         }
+        */
         this.viewGoalSnap.copy(this.viewGoal);
         util.snapView(this.viewGoalSnap, this.canvas);
     }
     ;
     onDragBegin(x, y, shiftKey, ctrlKey, altKey) {
         //console.log("Camera::onDragBegin");
-        if (shiftKey) {
-            this.oldView.copy(this.view);
-        }
+        //if (shiftKey) {
+        this.oldView.copy(this.view);
+        //}
     }
     ;
     onDragUpdate(dx, dy, shiftKey, ctrlKey, altKey) {
         //console.log("Camera::onDragUpdate");
         //this.viewGoal.copy(this.oldView);
-        if (shiftKey) {
-            this.viewGoal.origin.x -= dx / this.viewGoal.scale;
-            this.viewGoal.origin.y -= dy / this.viewGoal.scale;
-            this.viewGoalSnap.copy(this.viewGoal);
-            util.snapView(this.viewGoalSnap, this.canvas);
-        }
+        //if (shiftKey) {
+        this.viewGoal.origin.x -= dx / this.viewGoal.scale;
+        this.viewGoal.origin.y -= dy / this.viewGoal.scale;
+        this.viewGoalSnap.copy(this.viewGoal);
+        util.snapView(this.viewGoalSnap, this.canvas);
+        //}
     }
     ;
     onDragCancel(x, y) {
@@ -94,48 +96,51 @@ export class Camera {
     }
     ;
     onKeyDown(key, shiftKey, ctrlKey, altKey) {
-        console.log("Camera::onKeyDown");
-        if (key == 33) {
+        console.log("Camera::onKeyDown " + key);
+        if (key == "Escape") {
+            this.viewGoal = new View();
+            this.viewGoalSnap = new View();
+        }
+        if (key == "PageUp") {
             this.viewGoal.origin.y -= 800 / this.viewGoal.scale;
             this.viewGoalSnap.copy(this.viewGoal);
             util.snapView(this.viewGoalSnap, this.canvas);
             return;
         }
-        if (key == 34) {
+        if (key == "PageDown") {
             this.viewGoal.origin.y += 800 / this.viewGoal.scale;
             this.viewGoalSnap.copy(this.viewGoal);
             util.snapView(this.viewGoalSnap, this.canvas);
             return;
         }
         // left
-        if (key == 37) {
+        if (key == "ArrowLeft") {
             this.viewGoal.origin.x -= 100 / this.viewGoal.scale;
             this.viewGoalSnap.copy(this.viewGoal);
             util.snapView(this.viewGoalSnap, this.canvas);
             return;
         }
         // up
-        if (key == 38) {
+        if (key == "ArrowUp") {
             this.viewGoal.origin.y -= 100 / this.viewGoal.scale;
             this.viewGoalSnap.copy(this.viewGoal);
             util.snapView(this.viewGoalSnap, this.canvas);
             return;
         }
         // right
-        if (key == 39) {
+        if (key == "ArrowRight") {
             this.viewGoal.origin.x += 100 / this.viewGoal.scale;
             this.viewGoalSnap.copy(this.viewGoal);
             util.snapView(this.viewGoalSnap, this.canvas);
             return;
         }
         // down
-        if (key == 40) {
+        if (key == "ArrowDown") {
             this.viewGoal.origin.y += 100 / this.viewGoal.scale;
             this.viewGoalSnap.copy(this.viewGoal);
             util.snapView(this.viewGoalSnap, this.canvas);
             return;
         }
-        console.log(key);
     }
     ;
 }
