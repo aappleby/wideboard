@@ -23,9 +23,9 @@ uniform bool useProxy;
 
 //----------
 
-varying vec2 ftex;
-varying vec4 fcol;
-varying float shelf_offset;
+varying vec2  ftex;
+varying vec4  fcol;
+varying vec2  shelf_pos;
 
 // docmap is 1024x1024
 // linemap is 4096x4096
@@ -55,13 +55,15 @@ attribute vec4 iColor;
 // Z: line count
 // W: shelf position
 attribute vec4 iDocPos;
-attribute vec4 iDocPos2;
+attribute vec4 iDocInfo;
 
 void main(void) {
   float screen_x = iDocPos.x;
   float screen_y = iDocPos.y;
-  float line_count = iDocPos2.x;
-  float shelf_pos = iDocPos2.y;
+
+  float line_count  = iDocInfo.x;
+  float shelf_pos_x = iDocInfo.z;
+  float shelf_pos_y = iDocInfo.w;
 
   vec2 p = vpos;
   p *= vec2(glyph_w, glyph_h);
@@ -82,7 +84,7 @@ void main(void) {
 
   ftex = vpos * vec2(text_cols, line_count);
   fcol = iColor;
-  shelf_offset = shelf_pos;
+  shelf_pos = vec2(shelf_pos_x, shelf_pos_y);
 }
 
 #endif
@@ -108,6 +110,7 @@ void main(void) {
 
   // Convert line number + shelf offset to docmap texcoord
   vec2 docmapPos;
+  float shelf_offset = shelf_pos.x + shelf_pos.y * 4096.0;
   docmapPos.x = fract((row + shelf_offset) * inv_docmap_w)                + inv_docmap_w * 0.5;
   docmapPos.y = floor((row + shelf_offset) * inv_docmap_w) * inv_docmap_w + inv_docmap_w * 0.5;
 

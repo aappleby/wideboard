@@ -56,16 +56,16 @@ export class Shelf {
   //----------------------------------------
 
   addDocument(linePos : Array<number>, lineLength : Array<number>) {
-    let size = linePos.length;
+    let lineCount = linePos.length;
 
     let pos = this.cursorX + this.cursorY * this.width;
 
-    for (let i = 0; i < size; i++) {
+    for (let i = 0; i < lineCount; i++) {
       this.buffer[pos + i] = (lineLength[i] << 24) | linePos[i];
     }
 
-    this.cursorX = (pos + size) % this.width;
-    this.cursorY = (pos + size - this.cursorX) / this.width;
+    this.cursorX = (pos + lineCount) % this.width;
+    this.cursorY = (pos + lineCount - this.cursorX) / this.width;
 
     return pos;
   }
@@ -117,8 +117,8 @@ export class Shelf {
     document.screenY = screenY;
 
     let cursor = document.shelfIndex * 12;
-    this.docBuffer.data![cursor++] = (document.shelfIndex * 0.01) % 0.2;
-    this.docBuffer.data![cursor++] = (document.shelfIndex * 0.007) % 0.2;
+    this.docBuffer.data![cursor++] = 0.2;
+    this.docBuffer.data![cursor++] = 0.2;
     this.docBuffer.data![cursor++] = 0.2;
     this.docBuffer.data![cursor++] = 1.0;
     this.docBuffer.data![cursor++] = document.screenX;
@@ -126,9 +126,9 @@ export class Shelf {
     this.docBuffer.data![cursor++] = 0;
     this.docBuffer.data![cursor++] = 0;
     this.docBuffer.data![cursor++] = lineCount;
-    this.docBuffer.data![cursor++] = document.shelfPos;
     this.docBuffer.data![cursor++] = 0;
-    this.docBuffer.data![cursor++] = 0;
+    this.docBuffer.data![cursor++] = (document.shelfPos >>  0) & 0xFFF;
+    this.docBuffer.data![cursor++] = (document.shelfPos >> 12) & 0xFFF;
     this.docBuffer.uploadDirty(document.shelfIndex, document.shelfIndex + 1);
 
     this.updateTexture();
