@@ -55,18 +55,21 @@ attribute vec4 iColor;
 // Z: line count
 // W: shelf position
 attribute vec4 iDocPos;
+attribute vec4 iDocPos2;
 
 void main(void) {
+  float screen_x = iDocPos.x;
+  float screen_y = iDocPos.y;
+  float line_count = iDocPos2.x;
+  float shelf_pos = iDocPos2.y;
+
   vec2 p = vpos;
   p *= vec2(glyph_w, glyph_h);
-  p *= vec2(text_cols, iDocPos.z);
-  p += iDocPos.xy;
+  p *= vec2(text_cols, line_count);
+  p += vec2(screen_x, screen_y);
 
   p.x += 0.5;
   p.y += 0.5;
-
-  //float phase = (iDocPos.x / 10000.0) + 0.31 * (iDocPos.y / 10000.0);
-  //p += vec2(sin(ftime + phase), cos(ftime * 1.1 + phase)) * 1000.0 * wavey;
 
   p += worldToView.xy;
   p *= worldToView.zw;
@@ -77,11 +80,9 @@ void main(void) {
   p *= vec2(1.0, -1.0);
   gl_Position = vec4(p.x, p.y, 1.0, 1.0);
 
-  ftex = vpos * vec2(text_cols, iDocPos.z);
+  ftex = vpos * vec2(text_cols, line_count);
   fcol = iColor;
-  //float blah = sin(ftime + phase) * -0.2 + 0.2;
-  //fcol += vec4(blah, blah, blah, 0.0) * wavey;
-  shelf_offset = iDocPos.w;
+  shelf_offset = shelf_pos;
 }
 
 #endif

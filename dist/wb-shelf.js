@@ -39,7 +39,7 @@ export class Shelf {
         this.linemap = new Linemap(gl, 4096, 4096);
         //this.docPosBuffer   = new Buffer(gl, 'iDocPos',   gl.ARRAY_BUFFER, gl.FLOAT, 4, 65536);
         //this.docColorBuffer = new Buffer(gl, 'iDocColor', gl.ARRAY_BUFFER, gl.FLOAT, 4, 65536);
-        this.docBuffer = new Buffer(gl, 'doc', gl.ARRAY_BUFFER, gl.FLOAT, 8, 65536);
+        this.docBuffer = new Buffer(gl, 'doc', gl.ARRAY_BUFFER, gl.FLOAT, 12, 65536);
         this.tempBuffer = new Uint8Array(1024);
     }
     //----------------------------------------
@@ -88,15 +88,19 @@ export class Shelf {
         this.documents.push(document);
         document.screenX = screenX;
         document.screenY = screenY;
-        let cursor = document.shelfIndex * 8;
+        let cursor = document.shelfIndex * 12;
         this.docBuffer.data[cursor++] = (document.shelfIndex * 0.01) % 0.2;
         this.docBuffer.data[cursor++] = (document.shelfIndex * 0.007) % 0.2;
         this.docBuffer.data[cursor++] = 0.2;
         this.docBuffer.data[cursor++] = 1.0;
         this.docBuffer.data[cursor++] = document.screenX;
         this.docBuffer.data[cursor++] = document.screenY;
+        this.docBuffer.data[cursor++] = 0;
+        this.docBuffer.data[cursor++] = 0;
         this.docBuffer.data[cursor++] = lineCount;
         this.docBuffer.data[cursor++] = document.shelfPos;
+        this.docBuffer.data[cursor++] = 0;
+        this.docBuffer.data[cursor++] = 0;
         this.docBuffer.uploadDirty(document.shelfIndex, document.shelfIndex + 1);
         this.updateTexture();
         this.linemap.updateTexture();

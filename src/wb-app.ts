@@ -191,6 +191,7 @@ export class App {
         let loc_vpos = gl.getAttribLocation(prog, "vpos");
         let loc_icol = gl.getAttribLocation(prog, "iColor");
         let loc_idoc = gl.getAttribLocation(prog, "iDocPos");
+        let loc_idoc2 = gl.getAttribLocation(prog, "iDocPos2");
 
         let ext = gl.getExtension('ANGLE_instanced_arrays');
 
@@ -205,20 +206,27 @@ export class App {
         if (loc_icol >= 0) {
           gl.bindBuffer(gl.ARRAY_BUFFER, shelf.docBuffer.handle);
           gl.enableVertexAttribArray(loc_icol);
-          gl.vertexAttribPointer(loc_icol, 4, gl.FLOAT, false, 32,  0);
+          gl.vertexAttribPointer(loc_icol, 4, gl.FLOAT, false, 48,  0);
           ext.vertexAttribDivisorANGLE(loc_icol, 1);
         }
         if (loc_idoc >= 0) {
           gl.bindBuffer(gl.ARRAY_BUFFER, shelf.docBuffer.handle);
           gl.enableVertexAttribArray(loc_idoc);
-          gl.vertexAttribPointer(loc_idoc, 4, gl.FLOAT, false, 32,  16);
+          gl.vertexAttribPointer(loc_idoc, 4, gl.FLOAT, false, 48,  16);
           ext.vertexAttribDivisorANGLE(loc_idoc, 1);
+        }
+        if (loc_idoc2 >= 0) {
+          gl.bindBuffer(gl.ARRAY_BUFFER, shelf.docBuffer.handle);
+          gl.enableVertexAttribArray(loc_idoc2);
+          gl.vertexAttribPointer(loc_idoc2, 4, gl.FLOAT, false, 48,  32);
+          ext.vertexAttribDivisorANGLE(loc_idoc2, 1);
         }
         ext.drawElementsInstancedANGLE(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, 0, shelf.documents.length);
 
         ext.vertexAttribDivisorANGLE(0, 0);
         ext.vertexAttribDivisorANGLE(1, 0);
         ext.vertexAttribDivisorANGLE(2, 0);
+        ext.vertexAttribDivisorANGLE(3, 0);
       }
     }
   }
