@@ -51,20 +51,7 @@ export class Shelf {
         return count;
     }
     //----------------------------------------
-    // TODO: break doc into 1024-line-max chunks
-    addDocument(linePos, lineLength) {
-        let lineCount = linePos.length;
-        let pos = this.cursorX + this.cursorY * this.width;
-        for (let i = 0; i < lineCount; i++) {
-            this.buffer[pos + i] = (lineLength[i] << 24) | linePos[i];
-        }
-        let new_pos = pos + lineCount;
-        this.cursorX = new_pos % this.width;
-        this.cursorY = Math.floor(new_pos / this.width);
-        return pos;
-    }
-    //----------------------------------------
-    addDocument2(filename, bytes, lineStarts, lineLengths, screenX, screenY) {
+    addDocument(filename, bytes, lineStarts, lineLengths, screenX, screenY) {
         let document = new Document(filename);
         let chunk = new Chunk();
         document.chunks.push(chunk);
@@ -94,7 +81,15 @@ export class Shelf {
             chunk.lineLength.push(cursor2);
         }
         // Add the document to the shelf.
-        chunk.shelfPos = this.addDocument(chunk.linePos, chunk.lineLength);
+        let chunkLength = chunk.linePos.length;
+        let chunkPos = this.cursorX + this.cursorY * this.width;
+        for (let i = 0; i < chunkLength; i++) {
+            this.buffer[chunkPos + i] = (chunk.lineLength[i] << 24) | chunk.linePos[i];
+        }
+        let new_pos = chunkPos + chunkLength;
+        this.cursorX = new_pos % this.width;
+        this.cursorY = Math.floor(new_pos / this.width);
+        chunk.shelfPos = chunkPos;
         this.documents.push(document);
         chunk.screenX = screenX;
         chunk.screenY = screenY;
