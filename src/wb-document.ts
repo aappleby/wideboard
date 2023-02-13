@@ -1,23 +1,22 @@
 
+
 // Main document class for Wideboard.
+
+export class Chunk {
+  screenX : number = 0;
+  screenY : number = 0;
+  bufferIndex : number;
+  shelfPos : number;
+  linePos : Array<number> = [];
+  lineLength : Array<number> = [];
+};
+
+
 export class Document {
   filename : string;
-  linePos : Array<number>;
-  lineLength : Array<number>;
-  shelfIndex : number;
-  shelfPos : number;
-  screenX : number;
-  screenY : number;
-  ready : boolean; // True when the document is loaded.
+  chunks : Array<Chunk> = [];
 
-  constructor() {
-    this.filename = 'filename';
-    this.linePos = [];
-    this.lineLength = [];
-    this.shelfIndex = -1;
-    this.shelfPos = -1;
-    this.screenX = 0;
-    this.screenY = 0;
-    this.ready = false;
+  constructor(filename : string) {
+    this.filename = filename;
   }
 };

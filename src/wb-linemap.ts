@@ -53,8 +53,6 @@ export class Linemap {
     return pos;
   };
 
-  // TODO(aappleby): This should flush only dirty chunks of the linemap to the
-  // GPU, but for now it's easier to flush the whole thing.
   updateTexture() {
     var gl = this.gl;
 

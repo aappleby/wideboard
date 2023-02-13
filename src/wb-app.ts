@@ -221,7 +221,7 @@ export class App {
           gl.vertexAttribPointer(loc_info, 4, gl.FLOAT, false, 48,  32);
           ext.vertexAttribDivisorANGLE(loc_info, 1);
         }
-        ext.drawElementsInstancedANGLE(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, 0, shelf.documents.length);
+        ext.drawElementsInstancedANGLE(gl.TRIANGLES, 6, gl.UNSIGNED_BYTE, 0, shelf.chunk_count());
 
         ext.vertexAttribDivisorANGLE(0, 0);
         ext.vertexAttribDivisorANGLE(1, 0);

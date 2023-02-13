@@ -4,7 +4,7 @@
 
 import { Buffer } from "./wb-buffer.js"
 import { Texture } from "./wb-texture.js"
-import { Document } from "./wb-document.js"
+import { Chunk, Document } from "./wb-document.js"
 import { Linemap } from "./wb-linemap.js"
 
 let globalShelfIndex = 0;
@@ -55,6 +55,17 @@ export class Shelf {
 
   //----------------------------------------
 
+  chunk_count() {
+    let count = 0;
+    for (let i = 0; i < this.documents.length; i++) {
+      count += this.documents[i].chunks.length;
+    }
+    return count;
+  }
+
+  //----------------------------------------
+  // TODO: break doc into 1024-line-max chunks
+
   addDocument(linePos : Array<number>, lineLength : Array<number>) {
     let lineCount = linePos.length;
 
@@ -64,18 +75,22 @@ export class Shelf {
       this.buffer[pos + i] = (lineLength[i] << 24) | linePos[i];
     }
 
-    this.cursorX = (pos + lineCount) % this.width;
-    this.cursorY = (pos + lineCount - this.cursorX) / this.width;
+    let new_pos = pos + lineCount;
+    this.cursorX = new_pos % this.width;
+    this.cursorY = Math.floor(new_pos / this.width);
 
     return pos;
   }
 
   //----------------------------------------
 
-  addDocument2(bytes : Uint8Array, lineStarts : Array<number>, lineLengths : Array<number>, screenX : number, screenY : number) {
+  addDocument2(filename : string, bytes : Uint8Array, lineStarts : Array<number>, lineLengths : Array<number>, screenX : number, screenY : number) {
 
-    let document = new Document();
-    document.shelfIndex = this.documents.length;
+    let document = new Document(filename);
+    let chunk = new Chunk();
+    document.chunks.push(chunk);
+
+    chunk.bufferIndex = this.documents.length;
 
     let lineCount = lineStarts.length;
 
@@ -100,39 +115,42 @@ export class Shelf {
         }
       }
 
-      //let pos = this.linemap.addLine(bytes, lineStarts[i], lineLengths[i]);
       let pos = this.linemap.addLine(this.tempBuffer, 0, cursor2);
-      document.linePos.push(pos);
-      document.lineLength.push(cursor2);
+      chunk.linePos.push(pos);
+      chunk.lineLength.push(cursor2);
     }
 
     // Add the document to the shelf.
-    document.shelfPos = this.addDocument(document.linePos, document.lineLength);
-
-    document.ready = true;
+    chunk.shelfPos = this.addDocument(chunk.linePos, chunk.lineLength);
 
     this.documents.push(document);
 
-    document.screenX = screenX;
-    document.screenY = screenY;
+    chunk.screenX = screenX;
+    chunk.screenY = screenY;
 
-    let cursor = document.shelfIndex * 12;
+    let cursor = chunk.bufferIndex * 12;
+
     this.docBuffer.data![cursor++] = 0.2;
     this.docBuffer.data![cursor++] = 0.2;
     this.docBuffer.data![cursor++] = 0.2;
     this.docBuffer.data![cursor++] = 1.0;
-    this.docBuffer.data![cursor++] = document.screenX;
-    this.docBuffer.data![cursor++] = document.screenY;
+
+    this.docBuffer.data![cursor++] = chunk.screenX;
+    this.docBuffer.data![cursor++] = chunk.screenY;
     this.docBuffer.data![cursor++] = 0;
     this.docBuffer.data![cursor++] = 0;
+
     this.docBuffer.data![cursor++] = lineCount;
     this.docBuffer.data![cursor++] = 0;
-    this.docBuffer.data![cursor++] = (document.shelfPos >>  0) & 0xFFF;
-    this.docBuffer.data![cursor++] = (document.shelfPos >> 12) & 0xFFF;
-    this.docBuffer.uploadDirty(document.shelfIndex, document.shelfIndex + 1);
+    this.docBuffer.data![cursor++] = (chunk.shelfPos >>  0) & 0xFFF;
+    this.docBuffer.data![cursor++] = (chunk.shelfPos >> 12) & 0xFFF;
+
+    this.docBuffer.uploadDirty(chunk.bufferIndex, chunk.bufferIndex + 1);
 
     this.updateTexture();
     this.linemap.updateTexture();
+
+    //console.log("doc " + chunk.bufferIndex + " " + chunk.shelfPos);
   }
 
   //----------------------------------------
