@@ -1,0 +1,13 @@
+import hancho
+
+import glob
+
+hancho.task(
+    desc = "Running Typescript compiler",
+    command = [
+        "tsc --outDir build",
+        "echo Done >> {out_status}",
+    ],
+    in_src = glob.glob("src/*"),
+    out_status = "status.txt",
+)
